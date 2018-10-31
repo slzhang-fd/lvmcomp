@@ -29,13 +29,16 @@ Citation: Johnson, J. A. (2018, May 17). Data from Johnson, J. A. (2014).
     Measuring thirty facets of the five factor model with a 120-item public domain
     inventory: Development of the IPIP-NEO-120. J. of Research in Personality, 51, 78-89. 
     Retrieved from osf.io/wxvth
+    Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-
+    Scale Full-information Item Factor Analysis. Submitted to British Journal of Mathematical
+    and Statistical Psychology.
 Depends: R (>= 3.1)
 Imports: 
     Rcpp (>= 0.12.17),
     coda (>= 0.19-1),
     stats
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Encoding: UTF-8
 Author: Siliang Zhang [aut, cre],
     Yunxiao Chen [aut]

@@ -5,7 +5,8 @@
 \title{Stochastic EM algorithm for solving generalized partial credit model}
 \usage{
 StEM_pcirt(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20,
-  max.attempt = 40, tol = 1.5, precision = 0.015, frac1_value = 0.2)
+  max.attempt = 40, tol = 1.5, precision = 0.015,
+  frac1_value = 0.2)
 }
 \arguments{
 \item{response}{Matrix contains {0,1,...,M-1} responses for N rows of examinees and J columns of items.}
