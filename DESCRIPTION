@@ -1,37 +1,24 @@
 Package: lvmcomp
 Type: Package
-Title: Paralleled stochastic algorithms for large-scale item factor analysis
+Title: Stochastic EM algorithms for latent variable models with a high-dimensional latent space.
 Version: 1.0
-Date: 2018-08-10
+Date: 2018-11-5
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
     person("Yunxiao", "Chen", , role = "aut")
     )
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
-Description: The supmirt package provides functions that solving large scale item
-    factor models which may contains many examinees and items, and the latent 
-    dimensions may become larger than 10, which is problematic in traditional item
-    factor analysis algorithms such as EM with numerical integration (Gaussian Quadrature)
-    and even for the stat-of-art algorithm such as MH-RM algorithm in flexMIRT@ software. 
-    The package is equipped with an automatic estimation procedure that could stop 
-    based on diagnostic information. And multiprocessing OpenMP API is utilized to
-    unshackle the computing power on the modern multi-core machines.
-Details: It has three main goals:
-    1. Provide ready-to-use and tunning free framework of stochastic EM algorithm for 
-    practitioners to do item factor analysis more easily;
-    2. Utilizing multicore API and tailored C++ code to reach the lightning fast performance
-    so that much more huge dataset can be analyzed with feasible time spent;
-    3. Use of diagnostic statistics to form a relatively tunning free algorithm which is
-    more user friendly and reliable for psychometric scientist.
+Description: The lvmcomp package provides stochastic EM algorithms for latent variable models
+    with a high-dimensional latent space. So far, we provide functions for confirmatory item
+    factor analysis on the multidimensional two parameter logistic (M2PL) model and the 
+    generalized multidimensional partial credit model. These functions scale well for problems
+    with many latent traits (e.g., thirty or even more) and are virtually tuning-free.
+    The computation is facilitated by multiprocessing OpenMP API.
 License: GPL-2
 LazyData: true
-Citation: Johnson, J. A. (2018, May 17). Data from Johnson, J. A. (2014). 
-    Measuring thirty facets of the five factor model with a 120-item public domain
-    inventory: Development of the IPIP-NEO-120. J. of Research in Personality, 51, 78-89. 
-    Retrieved from osf.io/wxvth
-    Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-
-    Scale Full-information Item Factor Analysis. Submitted to British Journal of Mathematical
-    and Statistical Psychology.
+Citation: Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-
+    Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical
+    and Statistical Psychology}. To appear.
 Depends: R (>= 3.1)
 Imports: 
     Rcpp (>= 0.12.17),

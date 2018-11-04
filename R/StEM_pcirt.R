@@ -1,14 +1,14 @@
 #' Stochastic EM algorithm for solving generalized partial credit model
 #' 
-#' @param response Matrix contains {0,1,...,M-1} responses for N rows of examinees and J columns of items.
-#' @param Q J(# of items) by K(# of latent traits) matrix, contains 0/1 indicate each item measures which latent abilities.
+#' @param response N by J matrix containing {0,1,...,M-1} responses, where N is the number of respondents and J is the number of items.
+#' @param Q J by K matrix containing 0/1 entries, where J is the number of items and K is the number of latent traits. Each entry indicates whether an item measures a certain latent trait.
 #' @param A0 J by K matrix, the initial value of loading matrix.
-#' @param D0 J by M(# of categories of responses) matrix, the initial value of intercept parameters.
-#' @param theta0 N(# of examinees) by J matrix, the initial value of latent traits for each subjects.
-#' @param sigma0 K by K matrix, the initial value of the correlation matrix of latent traits.
-#' @param m The initial length of Markov chain window, default value is 200.
-#' @param TT The length of block size, default value is 20.
-#' @param max.attempt The maximum attampt times if the precision criterion is not meet.
+#' @param D0 J by M matrix containing the initial value of intercept parameters, where M is the number of response categories.
+#' @param theta0 N by K matrix, the initial value of latent traits for each respondent
+#' @param sigma0 K by K matrix, the initial value of correlations among latent traits.
+#' @param m The length of Markov chain window for choosing burn-in size with a default value 200.
+#' @param TT The batch size with a default value 20.
+#' @param max_attempt The maximum attampt times if the precision criterion is not meet.
 #' @param tol The tolerance of geweke statistic used for determining burn in size, default value is 1.5.
 #' @param precision The pre-set precision value for determining the length of Markov chain, default value is 0.015.
 #' @param frac1_value The first frac1_value percent and last 50 percent of Markov chain window to 
@@ -69,7 +69,7 @@
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_pcirt
-StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, max.attempt = 40,
+StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
                       tol = 1.5, precision = 0.015, frac1_value = 0.2){
   M <- max(response) + 1
   N <- nrow(response)
@@ -86,8 +86,8 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
   flag1 <- FALSE
   flag2 <- FALSE
   seg_all <- m / TT
-  for(attempt.i in 1:max.attempt){
-    cat("attemp: ",attempt.i,", ")
+  for(attempt_i in 1:max_attempt){
+    cat("attemp: ",attempt_i,", ")
     if(!flag1){
       z.value <- abs(geweke.diag(mcmc(result.window), frac1 = frac1_value)$z)
       z.value <- (sum(z.value[1:(K^2)]^2, na.rm = T)/2 + sum(z.value[(K^2+1):length(z.value)]^2, na.rm = T)) / ((K^2-K)/2+sum(Q) + (M-1)*J)

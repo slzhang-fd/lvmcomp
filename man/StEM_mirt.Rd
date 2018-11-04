@@ -5,41 +5,38 @@
 \title{Stochastic EM algorithm for solving multivariate item response theory model}
 \usage{
 StEM_mirt(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20,
-  max.attempt = 40, tol = 1.5, precision = 0.01, frac1_value = 0.2)
+  max_attempt = 40, tol = 1.5, precision = 0.01)
 }
 \arguments{
-\item{response}{Matrix contains 0/1 responses for N rows of examinees and J columns of items.}
+\item{response}{N by J matrix containing 0/1 responses, where N is the number of respondents and J is the number of items.}
 
-\item{Q}{J(# of items) by K(# of latent traits) matrix, contains 0/1 indicate each item measures which latent abilities.}
+\item{Q}{J by K matrix containing 0/1 entries, where J is the number of items and K is the number of latent traits. Each entry indicates whether an item measures a certain latent trait.}
 
 \item{A0}{J by K matrix, the initial value of loading matrix.}
 
 \item{d0}{Length J vector, the initial value of intercept parameters.}
 
-\item{theta0}{N(# of examinees) by J matrix, the initial value of latent traits for each subjects.}
+\item{theta0}{N by K matrix, the initial value of latent traits for each respondent.}
 
-\item{sigma0}{K by K matrix, the initial value of the correlation matrix of latent traits.}
+\item{sigma0}{K by K matrix, the initial value of correlations among the latent traits.}
 
-\item{m}{The initial length of Markov chain window, default value is 200.}
+\item{m}{The length of Markov chain window for choosing burn-in size with a default value 200.}
 
-\item{TT}{The length of block size, default value is 20.}
+\item{TT}{The batch size with a default value 20.}
 
-\item{max.attempt}{The maximum attampt times if the precision criterion is not meet.}
+\item{max_attempt}{The maximum number of batches before stopping.}
 
-\item{tol}{The tolerance of geweke statistic used for determining burn in size, default value is 1.5.}
+\item{tol}{The tolerance of geweke statistic used for determining burn-in size with a default value 1.5.}
 
-\item{precision}{The pre-set precision value for determining the length of Markov chain, default value is 1e-2.}
-
-\item{frac1_value}{The first frac1_value percent and last 50 percent of Markov chain window to 
-be used to calculate geweke statistic.}
+\item{precision}{The precision value for determining the stopping of the algorithm with a default value 1e-2.}
 }
 \value{
 The function returns a list with the following components:
 \describe{
-  \item{A_hat}{The estimated loading matrix}
+  \item{A_hat}{The estimated loading matrix.}
   \item{d_hat}{The estimated value of intercept parameters.}
   \item{sigma_hat}{The estimated value of correlation matrix of latent traits.}
-  \item{burn_in_T}{The length of burn in size.}
+  \item{burn_in_T}{The length of burn-in size.}
 }
 }
 \description{
@@ -47,31 +44,13 @@ Stochastic EM algorithm for solving multivariate item response theory model
 }
 \examples{
 \dontrun{
-# 2018-08-10
 # run example of StEM of MIRT model
 
-# generate response data from M2PL model
-N <- 2000
-J <- 100
-K <- 10
-
-A <- matrix(0, J, K)
-for(i in 1:K){
-  A[((i-1)*J/K+1):(i*J/K),i] <- 1
-}
-A[which(A>0)] <- runif(J, 0.5, 1.5)
-d <- rnorm(J)
-sigma <- matrix(0.6,K,K)
-diag(sigma) <- 1
-theta <- matrix(rnorm(N*K,0,1), N)
-theta <- theta \%*\% chol(sigma)
-tmp <- t(A \%*\% t(theta) + d)
-prob <- as.vector(1 / (1 + exp(-tmp)))
-response <- matrix(rbinom(N*J, 1, prob = prob),N,J)
+# load a simulated dataset
+attach(data_sim)
 
 # generate trivial starting values of parameters
-Q <- A > 0
-A0 <- (A>0)*1
+A0 <- Q
 d0 <- rep(0, J)
 theta0 <- matrix(rnorm(N*K, 0, 1),N)
 sigma0 <- diag(K) 
@@ -81,5 +60,5 @@ stem_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
 }
 }
 \references{
-An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis
+Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.
 }
