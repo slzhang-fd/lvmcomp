@@ -5,34 +5,30 @@
 \title{Stochastic EM algorithm for solving generalized partial credit model}
 \usage{
 StEM_pcirt(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20,
-  max.attempt = 40, tol = 1.5, precision = 0.015,
-  frac1_value = 0.2)
+  max_attempt = 40, tol = 1.5, precision = 0.015)
 }
 \arguments{
-\item{response}{Matrix contains {0,1,...,M-1} responses for N rows of examinees and J columns of items.}
+\item{response}{N by J matrix containing {0,1,...,M-1} responses, where N is the number of respondents and J is the number of items.}
 
-\item{Q}{J(# of items) by K(# of latent traits) matrix, contains 0/1 indicate each item measures which latent abilities.}
+\item{Q}{J by K matrix containing 0/1 entries, where J is the number of items and K is the number of latent traits. Each entry indicates whether an item measures a certain latent trait.}
 
 \item{A0}{J by K matrix, the initial value of loading matrix.}
 
-\item{D0}{J by M(# of categories of responses) matrix, the initial value of intercept parameters.}
+\item{D0}{J by M matrix containing the initial value of intercept parameters, where M is the number of response categories.}
 
-\item{theta0}{N(# of examinees) by J matrix, the initial value of latent traits for each subjects.}
+\item{theta0}{N by K matrix, the initial value of latent traits for each respondent}
 
-\item{sigma0}{K by K matrix, the initial value of the correlation matrix of latent traits.}
+\item{sigma0}{K by K matrix, the initial value of correlations among latent traits.}
 
-\item{m}{The initial length of Markov chain window, default value is 200.}
+\item{m}{The length of Markov chain window for choosing burn-in size with a default value 200.}
 
-\item{TT}{The length of block size, default value is 20.}
+\item{TT}{The batch size with a default value 20.}
 
-\item{max.attempt}{The maximum attampt times if the precision criterion is not meet.}
+\item{max_attempt}{The maximum attampt times if the precision criterion is not meet.}
 
 \item{tol}{The tolerance of geweke statistic used for determining burn in size, default value is 1.5.}
 
 \item{precision}{The pre-set precision value for determining the length of Markov chain, default value is 0.015.}
-
-\item{frac1_value}{The first frac1_value percent and last 50 percent of Markov chain window to 
-be used to calculate geweke statistic.}
 }
 \value{
 The function returns a list with the following components:
@@ -48,42 +44,19 @@ Stochastic EM algorithm for solving generalized partial credit model
 }
 \examples{
 \dontrun{
-# 2018-08-10
-# run example of StEM of generalized partial credit mode
+# run an example based on the partial credit model
 
-# generate response data from generalized partial credit model
-M <- 3
-N <- 2000
-J <- 10
-K <- 2
+# load a simulated dataset
+attach(data_sim_pcirt)
 
-A <- matrix(0, J, K)
-for(i in 1:K){
-  A[((i-1)*J/K+1):(i*J/K),i] <- 1
-}
-A[which(A>0)] <- runif(J, 0.5, 1.5)
-
-D <- matrix(0, J, M)
-D[,2:M] <- rnorm(J*(M-1), 0, 0.3)
-D <- t(apply(D, 1, cumsum))
-theta <- matrix(rnorm(N*K), N, K)
-thetaA <- theta \%*\% t(A)
-response <- matrix(0, N, J)
-for(i in 1:N){
-  for(j in 1:J){
-    tmp <- seq(0, M-1) * thetaA[i,j] + D[j,]
-    prob <- exp(tmp)/sum(exp(tmp))
-    response[i,j] <- which(rmultinom(1,1,prob)>0) - 1
-  }
-}
-
-Q <- A != 0
+# generate starting values for the algorithm
 A0 <- Q
 D0 <- matrix(1, J, M)
 D0[,1] <- 0
 theta0 <- matrix(rnorm(N*K), N, K)
-sigma0 <- diag(K)
+sigma0 <- diag(1, K)
 
+# do the confirmatory partial credit model analysis
 pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
 }   
 }

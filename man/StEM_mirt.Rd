@@ -12,7 +12,7 @@ StEM_mirt(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20,
 
 \item{Q}{J by K matrix containing 0/1 entries, where J is the number of items and K is the number of latent traits. Each entry indicates whether an item measures a certain latent trait.}
 
-\item{A0}{J by K matrix, the initial value of loading matrix.}
+\item{A0}{J by K matrix, the initial value of loading matrix, satisfying the constraints given by Q.}
 
 \item{d0}{Length J vector, the initial value of intercept parameters.}
 
@@ -44,19 +44,19 @@ Stochastic EM algorithm for solving multivariate item response theory model
 }
 \examples{
 \dontrun{
-# run example of StEM of MIRT model
+# run an example based on the M2PL model
 
 # load a simulated dataset
-attach(data_sim)
+attach(data_sim_mirt)
 
-# generate trivial starting values of parameters
+# generate starting values for the algorithm
 A0 <- Q
 d0 <- rep(0, J)
 theta0 <- matrix(rnorm(N*K, 0, 1),N)
-sigma0 <- diag(K) 
+sigma0 <- diag(1, K) 
 
 # do the confirmatory MIRT analysis
-stem_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
+mirt_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
 }
 }
 \references{

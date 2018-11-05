@@ -11,8 +11,6 @@
 #' @param max_attempt The maximum attampt times if the precision criterion is not meet.
 #' @param tol The tolerance of geweke statistic used for determining burn in size, default value is 1.5.
 #' @param precision The pre-set precision value for determining the length of Markov chain, default value is 0.015.
-#' @param frac1_value The first frac1_value percent and last 50 percent of Markov chain window to 
-#'     be used to calculate geweke statistic.
 #' 
 #' @return The function returns a list with the following components:
 #' \describe{
@@ -28,49 +26,26 @@
 #' 
 #' @examples
 #' \dontrun{
-#' # 2018-08-10
-#' # run example of StEM of generalized partial credit mode
+#' # run an example based on the partial credit model
 #' 
-#' # generate response data from generalized partial credit model
-#' M <- 3
-#' N <- 2000
-#' J <- 10
-#' K <- 2
+#' # load a simulated dataset
+#' attach(data_sim_pcirt)
 #' 
-#' A <- matrix(0, J, K)
-#' for(i in 1:K){
-#'   A[((i-1)*J/K+1):(i*J/K),i] <- 1
-#' }
-#' A[which(A>0)] <- runif(J, 0.5, 1.5)
-#' 
-#' D <- matrix(0, J, M)
-#' D[,2:M] <- rnorm(J*(M-1), 0, 0.3)
-#' D <- t(apply(D, 1, cumsum))
-#' theta <- matrix(rnorm(N*K), N, K)
-#' thetaA <- theta %*% t(A)
-#' response <- matrix(0, N, J)
-#' for(i in 1:N){
-#'   for(j in 1:J){
-#'     tmp <- seq(0, M-1) * thetaA[i,j] + D[j,]
-#'     prob <- exp(tmp)/sum(exp(tmp))
-#'     response[i,j] <- which(rmultinom(1,1,prob)>0) - 1
-#'   }
-#' }
-#' 
-#' Q <- A != 0
+#' # generate starting values for the algorithm
 #' A0 <- Q
 #' D0 <- matrix(1, J, M)
 #' D0[,1] <- 0
 #' theta0 <- matrix(rnorm(N*K), N, K)
-#' sigma0 <- diag(K)
+#' sigma0 <- diag(1, K)
 #' 
+#' # do the confirmatory partial credit model analysis
 #' pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
 #' }   
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_pcirt
 StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
-                      tol = 1.5, precision = 0.015, frac1_value = 0.2){
+                      tol = 1.5, precision = 0.015){
   M <- max(response) + 1
   N <- nrow(response)
   K <- ncol(A0)
@@ -89,7 +64,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
   for(attempt_i in 1:max_attempt){
     cat("attemp: ",attempt_i,", ")
     if(!flag1){
-      z.value <- abs(geweke.diag(mcmc(result.window), frac1 = frac1_value)$z)
+      z.value <- abs(geweke.diag(mcmc(result.window), frac1 = 0.2)$z)
       z.value <- (sum(z.value[1:(K^2)]^2, na.rm = T)/2 + sum(z.value[(K^2+1):length(z.value)]^2, na.rm = T)) / ((K^2-K)/2+sum(Q) + (M-1)*J)
       cat("Geweke stats: ", z.value,"\n")
       if(z.value < tol){
@@ -140,7 +115,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
                   "burn_in_T" = burn_in_T))
     }
   }
-  cat("No feasible result.window founded\n")
+  cat("Warning! The iteration limit has been reached. The result may not be valid. \n")
   res_tmp <- colMeans(full_window)
   sigma_hat <- matrix(res_tmp[1:(K^2)], K)
   A_hat <- matrix(res_tmp[(K^2+1):(K^2+J*K)], J)
@@ -148,6 +123,5 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
   return(list("A_hat"= A_hat,
               "D_hat"= D_hat,
               "sigma_hat" = sigma_hat,
-              "M" = nrow(full_window)/TT,
               "burn_in_T" = burn_in_T))
 }
