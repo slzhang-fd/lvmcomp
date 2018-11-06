@@ -6,7 +6,7 @@
 \title{Simulated dataset for multivariate item response theory model.}
 \format{An object of class \code{list} of length 9.}
 \usage{
-attach(data_sim_mirt)
+data_sim_mirt
 }
 \description{
 The dataset contains the simulation setting and the response data.

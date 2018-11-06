@@ -8,7 +8,10 @@
 //' @importFrom Rcpp evalCpp
 // [[Rcpp::export]]
 Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
-                     arma::mat A0, arma::vec d0, arma::mat theta0, arma::mat sigma0, int T){
+                     arma::mat A0, arma::vec d0, arma::mat theta0, 
+                     arma::mat sigma0, int T, bool parallel){
+  if(!parallel)
+    omp_set_num_threads(1);
   int N = response.n_rows;
   int J = response.n_cols;
   int K = A0.n_cols;
@@ -50,7 +53,10 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
 }
 // [[Rcpp::export]]
 Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
-                                    arma::mat A0, arma::mat D0, arma::mat theta0, arma::mat sigma0, int T){
+                                    arma::mat A0, arma::mat D0, arma::mat theta0,
+                                    arma::mat sigma0, int T, bool parallel){
+  if(!parallel)
+    omp_set_num_threads(1);
   int N = response.n_rows;
   int J = response.n_cols;
   int K = A0.n_cols;

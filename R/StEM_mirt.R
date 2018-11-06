@@ -11,8 +11,7 @@
 #' @param max_attempt The maximum number of batches before stopping.
 #' @param tol The tolerance of geweke statistic used for determining burn-in size with a default value 1.5.
 #' @param precision The precision value for determining the stopping of the algorithm with a default value 1e-2.
-# #' @param frac1_value The first frac1_value percent and last 50 percent of Markov chain window to
-# #'     be used to calculate geweke statistic.
+#' @param parallel Whether or not enable the parallel computing with a default value FALSE.
 #' 
 #' @return The function returns a list with the following components:
 #' \describe{
@@ -25,6 +24,7 @@
 #' 
 #' @references 
 #' Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.
+#' D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
 #' 
 #' @examples
 #' \dontrun{
@@ -46,7 +46,7 @@
 #' @importFrom stats sd cor
 #' @export StEM_mirt
 StEM_mirt <- function(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
-                           tol = 1.5, precision = 0.01){
+                           tol = 1.5, precision = 0.01, parallel=F){
   N <- nrow(response)
   K <- ncol(A0)
   J <- nrow(A0)
@@ -58,7 +58,7 @@ StEM_mirt <- function(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20, max
      ncol(theta0)!=K || nrow(sigma0)!=K || ncol(sigma0)!=K)
     stop("The input argument dimension is incorrect. Please check!\n")
   burn_in_T <- 0 
-  temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, m)
+  temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, m, parallel=parallel)
   full_window <- result.window <- temp$res
   flag1 <- FALSE
   flag2 <- FALSE
@@ -78,7 +78,7 @@ StEM_mirt <- function(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20, max
         d0 <- temp$d0
         theta0 <- temp$theta0
         sigma0 <- temp$sigma0
-        temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, TT)
+        temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, TT, parallel=parallel)
         result.window <- rbind(result.window[(TT+1):m,], temp$res)
         full_window <- rbind(full_window, temp$res)
         burn_in_T <- burn_in_T + 1
@@ -101,7 +101,7 @@ StEM_mirt <- function(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20, max
         d0 <- temp$d0
         theta0 <- temp$theta0
         sigma0 <- temp$sigma0
-        temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, TT)
+        temp <- stem_mirtc(response, Q, A0, d0, theta0, sigma0, TT, parallel=parallel)
         result.window <- rbind(result.window, temp$res)
         full_window <- rbind(full_window, temp$res)
       }

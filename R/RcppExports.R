@@ -55,11 +55,11 @@ my_Logistic_cpp_partial <- function(XX, YY, beta0, D0) {
 
 #' @useDynLib lvmcomp
 #' @importFrom Rcpp evalCpp
-stem_mirtc <- function(response, Q, A0, d0, theta0, sigma0, T) {
-    .Call('_lvmcomp_stem_mirtc', PACKAGE = 'lvmcomp', response, Q, A0, d0, theta0, sigma0, T)
+stem_mirtc <- function(response, Q, A0, d0, theta0, sigma0, T, parallel) {
+    .Call('_lvmcomp_stem_mirtc', PACKAGE = 'lvmcomp', response, Q, A0, d0, theta0, sigma0, T, parallel)
 }
 
-stem_pcirtc <- function(response, Q, A0, D0, theta0, sigma0, T) {
-    .Call('_lvmcomp_stem_pcirtc', PACKAGE = 'lvmcomp', response, Q, A0, D0, theta0, sigma0, T)
+stem_pcirtc <- function(response, Q, A0, D0, theta0, sigma0, T, parallel) {
+    .Call('_lvmcomp_stem_pcirtc', PACKAGE = 'lvmcomp', response, Q, A0, D0, theta0, sigma0, T, parallel)
 }
 

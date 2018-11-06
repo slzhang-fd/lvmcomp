@@ -209,8 +209,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // stem_mirtc
-Rcpp::List stem_mirtc(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, arma::mat sigma0, int T);
-RcppExport SEXP _lvmcomp_stem_mirtc(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP sigma0SEXP, SEXP TSEXP) {
+Rcpp::List stem_mirtc(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, arma::mat sigma0, int T, bool parallel);
+RcppExport SEXP _lvmcomp_stem_mirtc(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP sigma0SEXP, SEXP TSEXP, SEXP parallelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -221,13 +221,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
     Rcpp::traits::input_parameter< arma::mat >::type sigma0(sigma0SEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(stem_mirtc(response, Q, A0, d0, theta0, sigma0, T));
+    Rcpp::traits::input_parameter< bool >::type parallel(parallelSEXP);
+    rcpp_result_gen = Rcpp::wrap(stem_mirtc(response, Q, A0, d0, theta0, sigma0, T, parallel));
     return rcpp_result_gen;
 END_RCPP
 }
 // stem_pcirtc
-Rcpp::List stem_pcirtc(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::mat D0, arma::mat theta0, arma::mat sigma0, int T);
-RcppExport SEXP _lvmcomp_stem_pcirtc(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP D0SEXP, SEXP theta0SEXP, SEXP sigma0SEXP, SEXP TSEXP) {
+Rcpp::List stem_pcirtc(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::mat D0, arma::mat theta0, arma::mat sigma0, int T, bool parallel);
+RcppExport SEXP _lvmcomp_stem_pcirtc(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP D0SEXP, SEXP theta0SEXP, SEXP sigma0SEXP, SEXP TSEXP, SEXP parallelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -238,7 +239,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
     Rcpp::traits::input_parameter< arma::mat >::type sigma0(sigma0SEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(stem_pcirtc(response, Q, A0, D0, theta0, sigma0, T));
+    Rcpp::traits::input_parameter< bool >::type parallel(parallelSEXP);
+    rcpp_result_gen = Rcpp::wrap(stem_pcirtc(response, Q, A0, D0, theta0, sigma0, T, parallel));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -257,8 +259,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lvmcomp_neg_loglik_deri_partial_credit", (DL_FUNC) &_lvmcomp_neg_loglik_deri_partial_credit, 4},
     {"_lvmcomp_my_Logistic_cpp", (DL_FUNC) &_lvmcomp_my_Logistic_cpp, 4},
     {"_lvmcomp_my_Logistic_cpp_partial", (DL_FUNC) &_lvmcomp_my_Logistic_cpp_partial, 4},
-    {"_lvmcomp_stem_mirtc", (DL_FUNC) &_lvmcomp_stem_mirtc, 7},
-    {"_lvmcomp_stem_pcirtc", (DL_FUNC) &_lvmcomp_stem_pcirtc, 7},
+    {"_lvmcomp_stem_mirtc", (DL_FUNC) &_lvmcomp_stem_mirtc, 8},
+    {"_lvmcomp_stem_pcirtc", (DL_FUNC) &_lvmcomp_stem_pcirtc, 8},
     {NULL, NULL, 0}
 };
 

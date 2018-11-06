@@ -6,7 +6,7 @@
 \title{Simulated dataset for generalized partial credit model.}
 \format{An object of class \code{list} of length 10.}
 \usage{
-attach(data_sim_pcirt)
+data_sim_pcirt
 }
 \description{
 The dataset contains the simulation setting and the response data.

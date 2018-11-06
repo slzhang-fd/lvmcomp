@@ -5,7 +5,7 @@
 \title{Stochastic EM algorithm for solving multivariate item response theory model}
 \usage{
 StEM_mirt(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20,
-  max_attempt = 40, tol = 1.5, precision = 0.01)
+  max_attempt = 40, tol = 1.5, precision = 0.01, parallel = F)
 }
 \arguments{
 \item{response}{N by J matrix containing 0/1 responses, where N is the number of respondents and J is the number of items.}
@@ -29,6 +29,8 @@ StEM_mirt(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20,
 \item{tol}{The tolerance of geweke statistic used for determining burn-in size with a default value 1.5.}
 
 \item{precision}{The precision value for determining the stopping of the algorithm with a default value 1e-2.}
+
+\item{parallel}{Whether or not enable the parallel computing with a default value FALSE.}
 }
 \value{
 The function returns a list with the following components:
@@ -61,4 +63,5 @@ mirt_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
 }
 \references{
 Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.
+D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
 }

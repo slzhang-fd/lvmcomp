@@ -1,20 +1,21 @@
 Package: lvmcomp
 Type: Package
-Title: Stochastic EM algorithms for latent variable models with a high-dimensional latent space
+Title: Stochastic EM Algorithms for Latent Variable Models with a High-Dimensional Latent Space
 Version: 1.0
 Date: 2018-11-5
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
     person("Yunxiao", "Chen", , role = "aut")
     )
-Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
 Description: The lvmcomp package provides stochastic EM algorithms for latent variable models
     with a high-dimensional latent space. So far, we provide functions for confirmatory item
     factor analysis based on the multidimensional two parameter logistic (M2PL) model and the 
     generalized multidimensional partial credit model. These functions scale well for problems
     with many latent traits (e.g., thirty or even more) and are virtually tuning-free.
-    The computation is facilitated by multiprocessing OpenMP API.
-License: GPL-2
+    The computation is facilitated by multiprocessing 'OpenMP' API.
+Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
+URL: https://github.com/mrsta235/lvmcomp
+License: GPL-3
 LazyData: true
 Depends: R (>= 3.1)
 Imports: 

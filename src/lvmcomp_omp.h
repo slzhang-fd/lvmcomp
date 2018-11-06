@@ -1,6 +1,6 @@
 
-#ifndef SUPMIRT_OMP_H_
-#define SUPMIRT_OMP_H_
+#ifndef LVMCOMP_OMP_H_
+#define LVMCOMP_OMP_H_
 #if defined(_OPENMP)
 #include <omp.h>
 #else
@@ -16,4 +16,4 @@ inline int omp_get_num_procs() { return 1; }
 inline void omp_set_num_threads(int nthread) {}
 inline void omp_set_dynamic(int flag) {}
 #endif
-#endif //SUPMIRT_OMP_H_
+#endif //LVMCOMP_OMP_H_

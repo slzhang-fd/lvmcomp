@@ -11,6 +11,7 @@
 #' @param max_attempt The maximum attampt times if the precision criterion is not meet.
 #' @param tol The tolerance of geweke statistic used for determining burn in size, default value is 1.5.
 #' @param precision The pre-set precision value for determining the length of Markov chain, default value is 0.015.
+#' @param parallel Whether or not enable the parallel computing with a default value FALSE.
 #' 
 #' @return The function returns a list with the following components:
 #' \describe{
@@ -22,7 +23,8 @@
 #' }
 #' 
 #' @references 
-#' An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis
+#' Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.
+#' D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
 #' 
 #' @examples
 #' \dontrun{
@@ -45,7 +47,7 @@
 #' @importFrom stats sd cor
 #' @export StEM_pcirt
 StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
-                      tol = 1.5, precision = 0.015){
+                      tol = 1.5, precision = 0.015, parallel=F){
   M <- max(response) + 1
   N <- nrow(response)
   K <- ncol(A0)
@@ -56,7 +58,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
      ncol(theta0)!=K || nrow(sigma0)!=K || ncol(sigma0)!=K)
     stop("The input argument dimension is not correct, please check!\n")
   burn_in_T <- 0
-  temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, m)
+  temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, m, parallel=parallel)
   full_window <- result.window <- temp$res
   flag1 <- FALSE
   flag2 <- FALSE
@@ -76,7 +78,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
         D0 <- temp$D0
         theta0 <- temp$theta0
         sigma0 <- temp$sigma0
-        temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, TT)
+        temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, TT, parallel=parallel)
         result.window <- rbind(result.window[(TT+1):m,], temp$res)
         full_window <- rbind(full_window, temp$res)
         burn_in_T <- burn_in_T + 1
@@ -99,7 +101,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
         D0 <- temp$D0
         theta0 <- temp$theta0
         sigma0 <- temp$sigma0
-        temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, TT)
+        temp <- stem_pcirtc(response, Q, A0, D0, theta0, sigma0, TT, parallel=parallel)
         result.window <- rbind(result.window, temp$res)
         full_window <- rbind(full_window, temp$res)
       }
