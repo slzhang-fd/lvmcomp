@@ -46,7 +46,7 @@
 #' @importFrom stats sd cor
 #' @export StEM_mirt
 StEM_mirt <- function(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
-                           tol = 1.5, precision = 0.01, parallel=F){
+                           tol = 1.5, precision = 0.01, parallel=FALSE){
   N <- nrow(response)
   K <- ncol(A0)
   J <- nrow(A0)

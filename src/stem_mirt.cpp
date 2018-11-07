@@ -12,6 +12,8 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
                      arma::mat sigma0, int T, bool parallel){
   if(!parallel)
     omp_set_num_threads(1);
+  else
+    omp_set_num_threads(omp_get_num_procs());
   int N = response.n_rows;
   int J = response.n_cols;
   int K = A0.n_cols;
@@ -57,6 +59,8 @@ Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
                                     arma::mat sigma0, int T, bool parallel){
   if(!parallel)
     omp_set_num_threads(1);
+  else
+    omp_set_num_threads(omp_get_num_procs());
   int N = response.n_rows;
   int J = response.n_cols;
   int K = A0.n_cols;
@@ -87,7 +91,6 @@ Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
     // M step
     // tt = clock();
     sigma0 = calcu_sigma_cmle_cpp(theta0);
-#pragma omp parallel for
     for(int j=0;j<J;++j){
       arma::uvec rv(1), cv;
       rv(0) = j;
