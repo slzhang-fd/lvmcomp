@@ -1,18 +1,24 @@
 Package: lvmcomp
 Type: Package
 Title: Stochastic EM Algorithms for Latent Variable Models with a High-Dimensional Latent Space
-Version: 1.0
-Date: 2018-11-5
+Version: 1.1
+Date: 2018-12-10
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
-    person("Yunxiao", "Chen", , role = "aut")
+    person("Yunxiao", "Chen", , role = "aut"),
+    person("Jorge Nocedal", , role = "cph"),
+    person("Naoaki Okazaki", , role= "cph")
     )
-Description: The lvmcomp package provides stochastic EM algorithms for latent variable models
+Description: Provides stochastic EM algorithms for latent variable models
     with a high-dimensional latent space. So far, we provide functions for confirmatory item
     factor analysis based on the multidimensional two parameter logistic (M2PL) model and the 
     generalized multidimensional partial credit model. These functions scale well for problems
     with many latent traits (e.g., thirty or even more) and are virtually tuning-free.
     The computation is facilitated by multiprocessing 'OpenMP' API.
+    For more information, please refer to:
+    Zhang, S., Chen, Y., & Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-scale
+    Full-information Item Factor Analysis. British Journal of Mathematical and Statistical
+    Psychology. <doi:10.1111/bmsp.12153>.
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
 URL: https://github.com/mrsta235/lvmcomp
 License: GPL-3
@@ -26,4 +32,6 @@ LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.1.0
 Encoding: UTF-8
 Author: Siliang Zhang [aut, cre],
-    Yunxiao Chen [aut]
+    Yunxiao Chen [aut],
+    Jorge Nocedal [cph],
+    Naoaki Okazaki [cph]

@@ -54,7 +54,7 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
                             Rcpp::Named("theta0") = theta0);
 }
 // [[Rcpp::export]]
-Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
+Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,  
                                     arma::mat A0, arma::mat D0, arma::mat theta0,
                                     arma::mat sigma0, int T, bool parallel){
   if(!parallel)
