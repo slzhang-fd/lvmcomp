@@ -6,9 +6,13 @@ Date: 2018-12-10
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
     person("Yunxiao", "Chen", , role = "aut"),
-    person("Jorge Nocedal", , role = "cph"),
-    person("Naoaki Okazaki", , role= "cph")
+    person("Jorge", "Nocedal", , role = "cph"),
+    person("Naoaki", "Okazaki", , role= "cph")
     )
+Author: Siliang Zhang [aut, cre],
+    Yunxiao Chen [aut],
+    Jorge Nocedal [cph],
+    Naoaki Okazaki [cph]
 Description: Provides stochastic EM algorithms for latent variable models
     with a high-dimensional latent space. So far, we provide functions for confirmatory item
     factor analysis based on the multidimensional two parameter logistic (M2PL) model and the 
@@ -20,7 +24,8 @@ Description: Provides stochastic EM algorithms for latent variable models
     Full-information Item Factor Analysis. British Journal of Mathematical and Statistical
     Psychology. <doi:10.1111/bmsp.12153>.
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
-URL: https://github.com/mrsta235/lvmcomp
+URL: https://github.com/slzhang-fd/lvmcomp
+BugReports:	https://github.com/slzhang-fd/lvmcomp/issues
 License: GPL-3
 LazyData: true
 Depends: R (>= 3.1)
@@ -31,7 +36,3 @@ Imports:
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.1.0
 Encoding: UTF-8
-Author: Siliang Zhang [aut, cre],
-    Yunxiao Chen [aut],
-    Jorge Nocedal [cph],
-    Naoaki Okazaki [cph]
