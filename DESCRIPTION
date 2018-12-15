@@ -25,7 +25,7 @@ Description: Provides stochastic EM algorithms for latent variable models
     Psychology. <doi:10.1111/bmsp.12153>.
 Maintainer: Siliang Zhang <zhangsiliang123@gmail.com>
 URL: https://github.com/slzhang-fd/lvmcomp
-BugReports:	https://github.com/slzhang-fd/lvmcomp/issues
+BugReports: https://github.com/slzhang-fd/lvmcomp/issues
 License: GPL-3
 LazyData: true
 Depends: R (>= 3.1)
