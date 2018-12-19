@@ -27,7 +27,6 @@
 #' D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
 #' 
 #' @examples
-#' \dontrun{
 #' # run a toy example based on the partial credit model
 #' 
 #' # load a simulated dataset
@@ -43,7 +42,7 @@
 #' # do the confirmatory partial credit model analysis 
 #' # to enable multicore processing, set parallel = T
 #' pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
-#' }   
+#' 
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_pcirt

@@ -27,7 +27,6 @@
 #' D.C. Liu and J. Nocedal. On the Limited Memory Method for Large Scale Optimization (1989), Mathematical Programming B, 45, 3, pp. 503-528.
 #' 
 #' @examples
-#' \dontrun{
 #' # run a toy example based on the M2PL model
 #' 
 #' # load a simulated dataset
@@ -42,7 +41,7 @@
 #' # do the confirmatory MIRT analysis
 #' # to enable multicore processing, set parallel = T
 #' mirt_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
-#' }
+#' 
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_mirt

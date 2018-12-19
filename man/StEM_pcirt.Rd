@@ -45,7 +45,6 @@ The function returns a list with the following components:
 Stochastic EM algorithm for solving generalized partial credit model
 }
 \examples{
-\dontrun{
 # run a toy example based on the partial credit model
 
 # load a simulated dataset
@@ -61,7 +60,7 @@ sigma0 <- diag(1, K)
 # do the confirmatory partial credit model analysis 
 # to enable multicore processing, set parallel = T
 pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
-}   
+
 }
 \references{
 Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.
