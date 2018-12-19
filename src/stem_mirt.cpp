@@ -28,7 +28,7 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
   arma::vec glm_res(K+1);
   arma::uvec rv(1), cv;
   for(mcn=0;mcn<T;++mcn){
-    Rprintf("\rStep    %d  | ", mcn);
+    Rprintf("\rStep  %d\t| ", mcn+1);
     Rcpp::checkUserInterrupt();
     // E step
     inv_sigma = arma::inv(sigma0);
@@ -77,7 +77,7 @@ Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
   // double elapsedTime;
   // clock_t tt;
   for(mcn=0;mcn<T;++mcn){
-    Rprintf("\rmcn = %d | ", mcn);
+    Rprintf("\rStep  %d\t| ", mcn+1);
     Rcpp::checkUserInterrupt();
     // E step
     inv_sigma = arma::inv(sigma0);

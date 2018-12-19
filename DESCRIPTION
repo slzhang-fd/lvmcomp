@@ -1,8 +1,8 @@
 Package: lvmcomp
 Type: Package
 Title: Stochastic EM Algorithms for Latent Variable Models with a High-Dimensional Latent Space
-Version: 1.1
-Date: 2018-12-10
+Version: 1.2
+Date: 2018-12-19
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
     person("Yunxiao", "Chen", , role = "aut"),

@@ -46,7 +46,7 @@ Stochastic EM algorithm for solving multivariate item response theory model
 }
 \examples{
 \dontrun{
-# run an example based on the M2PL model
+# run a toy example based on the M2PL model
 
 # load a simulated dataset
 attach(data_sim_mirt)
@@ -58,6 +58,7 @@ theta0 <- matrix(rnorm(N*K, 0, 1),N)
 sigma0 <- diag(1, K) 
 
 # do the confirmatory MIRT analysis
+# to enable multicore processing, set parallel = T
 mirt_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
 }
 }

@@ -28,7 +28,7 @@
 #' 
 #' @examples
 #' \dontrun{
-#' # run an example based on the partial credit model
+#' # run a toy example based on the partial credit model
 #' 
 #' # load a simulated dataset
 #' attach(data_sim_pcirt)
@@ -40,7 +40,8 @@
 #' theta0 <- matrix(rnorm(N*K), N, K)
 #' sigma0 <- diag(1, K)
 #' 
-#' # do the confirmatory partial credit model analysis
+#' # do the confirmatory partial credit model analysis 
+#' # to enable multicore processing, set parallel = T
 #' pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
 #' }   
 #' @importFrom coda geweke.diag mcmc
@@ -69,7 +70,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
       z.value <- abs(geweke.diag(mcmc(result.window), frac1 = 0.2)$z)
       z.value <- (sum(z.value[1:(K^2)]^2, na.rm = T)/2 + sum(z.value[(K^2+1):length(z.value)]^2, na.rm = T)) / ((K^2-K)/2+sum(Q) + (M-1)*J)
       cat("Geweke stats: ", z.value,"\n")
-      if(z.value < tol){
+      if(z.value < tol && attempt_i > 1){
         flag1 <- TRUE
         cat("Burn in finished.\n")
       }
@@ -114,7 +115,7 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
       return(list("A_hat"= A_hat,
                   "D_hat"= D_hat,
                   "sigma_hat" = sigma_hat,
-                  "burn_in_T" = burn_in_T))
+                  "burn_in_T" = burn_in_T+1))
     }
   }
   cat("Warning! The iteration limit has been reached. The result may not be valid. \n")
@@ -125,5 +126,5 @@ StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, ma
   return(list("A_hat"= A_hat,
               "D_hat"= D_hat,
               "sigma_hat" = sigma_hat,
-              "burn_in_T" = burn_in_T))
+              "burn_in_T" = burn_in_T+1))
 }
