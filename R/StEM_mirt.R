@@ -33,6 +33,7 @@
 #' attach(data_sim_mirt)
 #' 
 #' # generate starting values for the algorithm
+#' set.seed(1234)
 #' A0 <- Q
 #' d0 <- rep(0, J)
 #' theta0 <- matrix(rnorm(N*K, 0, 1),N)

@@ -51,6 +51,7 @@ Stochastic EM algorithm for solving generalized partial credit model
 attach(data_sim_pcirt)
 
 # generate starting values for the algorithm
+set.seed(1234)
 A0 <- Q
 D0 <- matrix(1, J, M)
 D0[,1] <- 0
