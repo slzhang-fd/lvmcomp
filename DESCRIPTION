@@ -34,5 +34,5 @@ Imports:
     coda (>= 0.19-1),
     stats
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Encoding: UTF-8

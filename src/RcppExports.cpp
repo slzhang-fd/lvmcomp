@@ -136,6 +136,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// sample_theta_i_arms
+arma::vec sample_theta_i_arms(arma::vec theta0_i, arma::vec y_i, arma::mat inv_sigma, arma::mat A, arma::vec d);
+RcppExport SEXP _lvmcomp_sample_theta_i_arms(SEXP theta0_iSEXP, SEXP y_iSEXP, SEXP inv_sigmaSEXP, SEXP ASEXP, SEXP dSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type theta0_i(theta0_iSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y_i(y_iSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type inv_sigma(inv_sigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d(dSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_theta_i_arms(theta0_i, y_i, inv_sigma, A, d));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sample_theta_i_myars_partial_credit
 arma::vec sample_theta_i_myars_partial_credit(arma::vec x, arma::vec theta0_i, arma::vec y_i, arma::mat inv_sigma, arma::mat A, arma::mat D);
 RcppExport SEXP _lvmcomp_sample_theta_i_myars_partial_credit(SEXP xSEXP, SEXP theta0_iSEXP, SEXP y_iSEXP, SEXP inv_sigmaSEXP, SEXP ASEXP, SEXP DSEXP) {
@@ -149,6 +164,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
     Rcpp::traits::input_parameter< arma::mat >::type D(DSEXP);
     rcpp_result_gen = Rcpp::wrap(sample_theta_i_myars_partial_credit(x, theta0_i, y_i, inv_sigma, A, D));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sample_theta_i_arms_partial_credit
+arma::vec sample_theta_i_arms_partial_credit(arma::vec theta0_i, arma::vec y_i, arma::mat inv_sigma, arma::mat A, arma::mat D);
+RcppExport SEXP _lvmcomp_sample_theta_i_arms_partial_credit(SEXP theta0_iSEXP, SEXP y_iSEXP, SEXP inv_sigmaSEXP, SEXP ASEXP, SEXP DSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type theta0_i(theta0_iSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y_i(y_iSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type inv_sigma(inv_sigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type D(DSEXP);
+    rcpp_result_gen = Rcpp::wrap(sample_theta_i_arms_partial_credit(theta0_i, y_i, inv_sigma, A, D));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -254,7 +284,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lvmcomp_F_theta_y_eta_cpp_partial_credit", (DL_FUNC) &_lvmcomp_F_theta_y_eta_cpp_partial_credit, 7},
     {"_lvmcomp_deriv_based_ARS_partial_credit", (DL_FUNC) &_lvmcomp_deriv_based_ARS_partial_credit, 7},
     {"_lvmcomp_sample_theta_i_myars", (DL_FUNC) &_lvmcomp_sample_theta_i_myars, 6},
+    {"_lvmcomp_sample_theta_i_arms", (DL_FUNC) &_lvmcomp_sample_theta_i_arms, 5},
     {"_lvmcomp_sample_theta_i_myars_partial_credit", (DL_FUNC) &_lvmcomp_sample_theta_i_myars_partial_credit, 6},
+    {"_lvmcomp_sample_theta_i_arms_partial_credit", (DL_FUNC) &_lvmcomp_sample_theta_i_arms_partial_credit, 5},
     {"_lvmcomp_neg_loglik_logi_partial_credit", (DL_FUNC) &_lvmcomp_neg_loglik_logi_partial_credit, 4},
     {"_lvmcomp_neg_loglik_deri_partial_credit", (DL_FUNC) &_lvmcomp_neg_loglik_deri_partial_credit, 4},
     {"_lvmcomp_my_Logistic_cpp", (DL_FUNC) &_lvmcomp_my_Logistic_cpp, 4},

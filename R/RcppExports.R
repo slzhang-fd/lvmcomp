@@ -33,8 +33,16 @@ sample_theta_i_myars <- function(x, theta0_i, y_i, inv_sigma, A, d) {
     .Call('_lvmcomp_sample_theta_i_myars', PACKAGE = 'lvmcomp', x, theta0_i, y_i, inv_sigma, A, d)
 }
 
+sample_theta_i_arms <- function(theta0_i, y_i, inv_sigma, A, d) {
+    .Call('_lvmcomp_sample_theta_i_arms', PACKAGE = 'lvmcomp', theta0_i, y_i, inv_sigma, A, d)
+}
+
 sample_theta_i_myars_partial_credit <- function(x, theta0_i, y_i, inv_sigma, A, D) {
     .Call('_lvmcomp_sample_theta_i_myars_partial_credit', PACKAGE = 'lvmcomp', x, theta0_i, y_i, inv_sigma, A, D)
+}
+
+sample_theta_i_arms_partial_credit <- function(theta0_i, y_i, inv_sigma, A, D) {
+    .Call('_lvmcomp_sample_theta_i_arms_partial_credit', PACKAGE = 'lvmcomp', theta0_i, y_i, inv_sigma, A, D)
 }
 
 neg_loglik_logi_partial_credit <- function(theta, response_j, A_j, D_j) {

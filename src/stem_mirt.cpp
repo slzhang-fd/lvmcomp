@@ -34,7 +34,8 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
     inv_sigma = arma::inv(sigma0);
 #pragma omp parallel for
     for(i=0;i<N;++i){
-      theta0.row(i) = sample_theta_i_myars(x, theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, d0).t();
+      // theta0.row(i) = sample_theta_i_myars(x, theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, d0).t();
+      theta0.row(i) = sample_theta_i_arms(theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, d0).t();
     }
     // M step
     sigma0 = calcu_sigma_cmle_cpp(theta0);
@@ -85,7 +86,8 @@ Rcpp::List stem_pcirtc(const arma::mat &response, const arma::mat &Q,
 #pragma omp parallel for
     for(int i=0;i<N;++i){
       //Rprintf("i=%d\n",i);
-      theta0.row(i) = sample_theta_i_myars_partial_credit(x, theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, D0).t();
+      //theta0.row(i) = sample_theta_i_myars_partial_credit(x, theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, D0).t();
+      theta0.row(i) = sample_theta_i_arms_partial_credit(theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, D0).t();
     }
     // Rprintf("sampling elaps time is:%f ms | ", (clock()-tt)*1000.0 / CLOCKS_PER_SEC);
     // M step
