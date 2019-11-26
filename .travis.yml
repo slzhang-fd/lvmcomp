@@ -1,15 +1,15 @@
 # R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
 language: r
-warnings_are_errors: true
+warnings_are_errors: false
 sudo: false
 cache: packages
 
 r:
-  - oldrel
   - release
   - devel
   
 r_binary_packages:
   - Rcpp
   - RcppArmadillo
+  - coda
