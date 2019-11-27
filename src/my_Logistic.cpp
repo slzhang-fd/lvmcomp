@@ -19,20 +19,20 @@ arma::vec neg_loglik_deri(arma::mat XX, arma::vec YY, arma::vec beta, double d){
   return res / YY.n_elem;
 }
 // [[Rcpp::export]]
-double neg_loglik_logi_partial_credit(arma::mat theta, arma::vec response_j, arma::vec A_j, arma::vec D_j){
+double neg_loglik_logi_partial_credit(arma::mat theta, arma::uvec response_j, arma::vec A_j, arma::vec D_j){
   int M = D_j.n_rows;
   int N = response_j.n_rows;
   arma::vec thetaA_j = theta * A_j;
   arma::mat tmp = thetaA_j * arma::linspace(0, M-1, M).t();
   tmp.each_row() += D_j.t();
   arma::vec tmp_res(N);
-  for(int i=0;i<N;++i){
+  for(unsigned int i=0;i<N;++i){
     tmp_res(i) = tmp(i, response_j(i)) - log(sum(exp(tmp.row(i))));
   }
   return -mean(tmp_res) - 0.5*arma::sum(arma::log(5 - arma::abs(D_j))) / N;
 }
 // [[Rcpp::export]]
-arma::vec neg_loglik_deri_partial_credit(arma::mat theta, arma::vec response_j, arma::vec A_j, arma::vec D_j){
+arma::vec neg_loglik_deri_partial_credit(arma::mat theta, arma::uvec response_j, arma::vec A_j, arma::vec D_j){
   int M = D_j.n_rows;
   int N = theta.n_rows;
   int K = theta.n_cols;
@@ -116,7 +116,7 @@ static lbfgsfloatval_t evaluate_partial_credit(
   const int M = params[k++];
   
   arma::mat XX = arma::zeros(N,K);
-  arma::vec YY = arma::zeros(N);
+  arma::uvec YY = arma::zeros<arma::uvec>(N);
   arma::vec beta = arma::zeros(K);
   arma::vec D = arma::zeros(M);
   
@@ -193,7 +193,7 @@ arma::vec my_Logistic_cpp(arma::mat XX,  arma::vec YY, arma::vec beta0, double d
   return return_res;
 }
 // [[Rcpp::export]]
-arma::vec my_Logistic_cpp_partial(arma::mat XX,  arma::vec YY, arma::vec beta0, arma::vec D0){
+arma::vec my_Logistic_cpp_partial(arma::mat XX,  arma::uvec YY, arma::vec beta0, arma::vec D0){
   double ret = 0;
   const int N = XX.n_rows;
   const int K = beta0.n_elem;

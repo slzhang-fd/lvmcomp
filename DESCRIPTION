@@ -1,8 +1,8 @@
 Package: lvmcomp
 Type: Package
 Title: Stochastic EM Algorithms for Latent Variable Models with a High-Dimensional Latent Space
-Version: 1.2
-Date: 2018-12-19
+Version: 1.3.0
+Date: 2019-12-01
 Authors@R: c(
     person("Siliang", "Zhang", , "zhangsiliang123@gmail.com", c("aut", "cre")),
     person("Yunxiao", "Chen", , role = "aut"),
@@ -30,8 +30,8 @@ License: GPL-3
 LazyData: true
 Depends: R (>= 3.1)
 Imports: 
-    Rcpp (>= 0.12.17),
-    coda (>= 0.19-1),
+    Rcpp (>= 1.0.3),
+    coda (>= 0.19-3),
     stats
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 6.1.1

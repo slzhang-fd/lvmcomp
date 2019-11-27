@@ -1,6 +1,5 @@
 #ifndef __ARMS_ORI__
 #define __ARMS_ORI__
-#include <RcppArmadillo.h>
 
 int arms (double *xinit, int ninit, double *xl, double *xr, 
           double (*myfunc)(double x, void *mydata), void *mydata,

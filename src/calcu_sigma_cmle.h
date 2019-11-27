@@ -3,5 +3,5 @@
 #include <RcppArmadillo.h>
 
 double obj_func_cpp(arma::mat sigma, arma::mat sigma_hat);
-arma::mat calcu_sigma_cmle_cpp(arma::mat theta, double tol = 1e-5);
+arma::mat calcu_sigma_cmle_cpp(arma::mat theta, double tol);
 #endif

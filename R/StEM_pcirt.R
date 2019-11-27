@@ -43,11 +43,10 @@
 #' # do the confirmatory partial credit model analysis 
 #' # to enable multicore processing, set parallel = T
 #' pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
-#' 
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_pcirt
-StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20, max_attempt = 40,
+StEM_pcirt <- function(response, Q, A0, D0, theta0, sigma0, m = 100, TT = 20, max_attempt = 40,
                       tol = 1.5, precision = 0.015, parallel=F){
   M <- max(response) + 1
   N <- nrow(response)

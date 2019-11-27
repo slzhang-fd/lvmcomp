@@ -2,7 +2,8 @@
 
 export(StEM_mirt)
 export(StEM_pcirt)
-importFrom(Rcpp,evalCpp)
+export(calcu_sigma_cmle_cpp)
+importFrom(Rcpp,sourceCpp)
 importFrom(coda,geweke.diag)
 importFrom(coda,mcmc)
 importFrom(stats,cor)

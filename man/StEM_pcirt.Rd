@@ -4,7 +4,7 @@
 \alias{StEM_pcirt}
 \title{Stochastic EM algorithm for solving generalized partial credit model}
 \usage{
-StEM_pcirt(response, Q, A0, D0, theta0, sigma0, m = 200, TT = 20,
+StEM_pcirt(response, Q, A0, D0, theta0, sigma0, m = 100, TT = 20,
   max_attempt = 40, tol = 1.5, precision = 0.015, parallel = F)
 }
 \arguments{
@@ -61,7 +61,6 @@ sigma0 <- diag(1, K)
 # do the confirmatory partial credit model analysis 
 # to enable multicore processing, set parallel = T
 pcirt_res <- StEM_pcirt(response, Q, A0, D0, theta0, sigma0)
-
 }
 \references{
 Zhang, S., Chen, Y. and Liu, Y. (2018). An Improved Stochastic EM Algorithm for Large-Scale Full-information Item Factor Analysis. \emph{British Journal of Mathematical and Statistical Psychology}. To appear.

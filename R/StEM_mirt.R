@@ -42,7 +42,6 @@
 #' # do the confirmatory MIRT analysis
 #' # to enable multicore processing, set parallel = T
 #' mirt_res <- StEM_mirt(response, Q, A0, d0, theta0, sigma0)
-#' 
 #' @importFrom coda geweke.diag mcmc
 #' @importFrom stats sd cor
 #' @export StEM_mirt
