@@ -4,7 +4,7 @@
 #include           <stdio.h>
 #include           <math.h>
 #include           <stdlib.h>
-#include           <RcppArmadillo.h>
+#include           <Rcpp.h>
 /* *********************************************************************** */
 
 typedef struct point {    /* a point in the x,y plane */
@@ -882,8 +882,8 @@ double u_random()
   /* to return a standard uniform random number */
 {
   //return ((double)rand() + 0.5)/((double)RAND_MAX + 1.0);
-  //return R::unif_rand();
-  return arma::randu();
+  return R::unif_rand();
+  //return arma::randu();
 }
 
 /* *********************************************************************** */

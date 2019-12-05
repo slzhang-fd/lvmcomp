@@ -20,6 +20,7 @@ double log_pos_theta_mirt(double x, void* params){
   return -0.5 * arma::as_scalar(theta.t() * d_params->inv_sigma * theta) + 
     arma::accu(d_params->y_i % tmp - arma::log(1+arma::exp(tmp)));
 }
+
 arma::vec sample_theta_i_arms(arma::vec theta0_i, arma::vec y_i,
                               arma::mat inv_sigma, arma::mat A, arma::vec d) {
   int err, ninit = 5, npoint = 100, nsamp = 1, ncent = 0;

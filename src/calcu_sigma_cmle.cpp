@@ -1,12 +1,10 @@
-#include "calcu_sigma_cmle.h"
-#include<RcppArmadillo.h>
+#include <RcppArmadillo.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
 double obj_func_cpp(arma::mat sigma, arma::mat sigma_hat){
   arma::mat sigma_inv = arma::inv_sympd(sigma);
   return arma::accu( sigma_inv % sigma_hat ) + std::log(arma::det(sigma));
 }
-//' @export
 // [[Rcpp::export]]
 arma::mat calcu_sigma_cmle_cpp(arma::mat theta, double tol){
   int N = theta.n_rows;
@@ -22,8 +20,15 @@ arma::mat calcu_sigma_cmle_cpp(arma::mat theta, double tol){
     sigma1 = sigma0 - step * ( - tmp * sigma_hat * tmp + tmp );
     sigma1.diag().ones();
     eps = obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat);
-    while(eps < 0 || min(arma::eig_sym(sigma1)) < 0){
+    // Rprintf(" eps ==0: %s ", (eps==0) ? "true" : "false");
+    // Rprintf(" eps < -1e-7: %s ", (eps < -1e-7) ? "true" : "false");
+    // -1e-7 here for preventing -0.0 fall into the while loop
+    while(eps < -1e-7 || min(arma::eig_sym(sigma1)) < 0){
       step *= 0.5;
+      if(step < 1e-5){
+        Rprintf("Possible error in sigma estimation\n");
+        break;
+      }
       sigma1 = sigma0 - step * ( - tmp * sigma_hat * tmp + tmp );
       sigma1.diag().ones();
       eps = obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat);

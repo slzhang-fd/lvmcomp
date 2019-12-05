@@ -2,7 +2,9 @@
 
 export(StEM_mirt)
 export(StEM_pcirt)
-export(calcu_sigma_cmle_cpp)
+export(stem_mirtc)
+export(stem_simu)
+export(test_func)
 importFrom(Rcpp,sourceCpp)
 importFrom(coda,geweke.diag)
 importFrom(coda,mcmc)

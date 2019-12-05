@@ -110,6 +110,40 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// stem_simu
+Rcpp::List stem_simu(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, arma::mat A_true, int max_steps, int window_size, int block_size, double tol, bool print_proc);
+RcppExport SEXP _lvmcomp_stem_simu(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP A_trueSEXP, SEXP max_stepsSEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP tolSEXP, SEXP print_procSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A0(A0SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d0(d0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A_true(A_trueSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< int >::type window_size(window_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type block_size(block_sizeSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< bool >::type print_proc(print_procSEXP);
+    rcpp_result_gen = Rcpp::wrap(stem_simu(response, Q, A0, d0, theta0, A_true, max_steps, window_size, block_size, tol, print_proc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_func
+arma::mat test_func(arma::mat A, int i, int j);
+RcppExport SEXP _lvmcomp_test_func(SEXP ASEXP, SEXP iSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    Rcpp::traits::input_parameter< int >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_func(A, i, j));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_lvmcomp_calcu_sigma_cmle_cpp", (DL_FUNC) &_lvmcomp_calcu_sigma_cmle_cpp, 2},
@@ -119,6 +153,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lvmcomp_my_Logistic_cpp_partial", (DL_FUNC) &_lvmcomp_my_Logistic_cpp_partial, 4},
     {"_lvmcomp_stem_mirtc", (DL_FUNC) &_lvmcomp_stem_mirtc, 8},
     {"_lvmcomp_stem_pcirtc", (DL_FUNC) &_lvmcomp_stem_pcirtc, 8},
+    {"_lvmcomp_stem_simu", (DL_FUNC) &_lvmcomp_stem_simu, 11},
+    {"_lvmcomp_test_func", (DL_FUNC) &_lvmcomp_test_func, 3},
     {NULL, NULL, 0}
 };
 
