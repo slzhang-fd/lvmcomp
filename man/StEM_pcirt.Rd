@@ -4,8 +4,20 @@
 \alias{StEM_pcirt}
 \title{Stochastic EM algorithm for solving generalized partial credit model}
 \usage{
-StEM_pcirt(response, Q, A0, D0, theta0, sigma0, m = 100, TT = 20,
-  max_attempt = 40, tol = 1.5, precision = 0.015, parallel = F)
+StEM_pcirt(
+  response,
+  Q,
+  A0,
+  D0,
+  theta0,
+  sigma0,
+  m = 100,
+  TT = 20,
+  max_attempt = 40,
+  tol = 1.5,
+  precision = 0.015,
+  parallel = F
+)
 }
 \arguments{
 \item{response}{N by J matrix containing {0,1,...,M-1} responses, where N is the number of respondents and J is the number of items.}

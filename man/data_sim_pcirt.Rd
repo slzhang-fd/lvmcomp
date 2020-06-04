@@ -4,7 +4,9 @@
 \name{data_sim_pcirt}
 \alias{data_sim_pcirt}
 \title{Simulated dataset for generalized partial credit model.}
-\format{An object of class \code{list} of length 10.}
+\format{
+An object of class \code{list} of length 10.
+}
 \usage{
 data_sim_pcirt
 }

@@ -6,15 +6,80 @@
 
 using namespace Rcpp;
 
-// calcu_sigma_cmle_cpp
-arma::mat calcu_sigma_cmle_cpp(arma::mat theta, double tol);
-RcppExport SEXP _lvmcomp_calcu_sigma_cmle_cpp(SEXP thetaSEXP, SEXP tolSEXP) {
+// my_rand_unif
+double my_rand_unif();
+RcppExport SEXP _lvmcomp_my_rand_unif() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(my_rand_unif());
+    return rcpp_result_gen;
+END_RCPP
+}
+// log_sum_exp2
+double log_sum_exp2(const arma::vec& tmp);
+RcppExport SEXP _lvmcomp_log_sum_exp2(SEXP tmpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type tmp(tmpSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_sum_exp2(tmp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// update_sigma_one_step1
+arma::mat update_sigma_one_step1(const arma::mat& theta0, const arma::mat& B0, double step_B);
+RcppExport SEXP _lvmcomp_update_sigma_one_step1(SEXP theta0SEXP, SEXP B0SEXP, SEXP step_BSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type B0(B0SEXP);
+    Rcpp::traits::input_parameter< double >::type step_B(step_BSEXP);
+    rcpp_result_gen = Rcpp::wrap(update_sigma_one_step1(theta0, B0, step_B));
+    return rcpp_result_gen;
+END_RCPP
+}
+// oakes
+arma::mat oakes(arma::mat theta0, arma::mat response, arma::mat Q, arma::mat Sigma, arma::mat A, arma::vec d, int M);
+RcppExport SEXP _lvmcomp_oakes(SEXP theta0SEXP, SEXP responseSEXP, SEXP QSEXP, SEXP SigmaSEXP, SEXP ASEXP, SEXP dSEXP, SEXP MSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d(dSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    rcpp_result_gen = Rcpp::wrap(oakes(theta0, response, Q, Sigma, A, d, M));
+    return rcpp_result_gen;
+END_RCPP
+}
+// obj_det
+double obj_det(arma::mat theta, arma::mat B);
+RcppExport SEXP _lvmcomp_obj_det(SEXP thetaSEXP, SEXP BSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B(BSEXP);
+    rcpp_result_gen = Rcpp::wrap(obj_det(theta, B));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bfgs_update
+arma::mat bfgs_update(const arma::mat& theta0, const arma::mat& B0, bool flag, double tol);
+RcppExport SEXP _lvmcomp_bfgs_update(SEXP theta0SEXP, SEXP B0SEXP, SEXP flagSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type B0(B0SEXP);
+    Rcpp::traits::input_parameter< bool >::type flag(flagSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(calcu_sigma_cmle_cpp(theta, tol));
+    rcpp_result_gen = Rcpp::wrap(bfgs_update(theta0, B0, flag, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -111,8 +176,127 @@ BEGIN_RCPP
 END_RCPP
 }
 // stem_simu
-Rcpp::List stem_simu(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, arma::mat A_true, int max_steps, int window_size, int block_size, double tol, bool print_proc);
-RcppExport SEXP _lvmcomp_stem_simu(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP A_trueSEXP, SEXP max_stepsSEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP tolSEXP, SEXP print_procSEXP) {
+Rcpp::List stem_simu(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat sigma0, arma::mat theta0, double tol, int window_size, int block_size, int max_steps, bool print_proc);
+RcppExport SEXP _lvmcomp_stem_simu(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP sigma0SEXP, SEXP theta0SEXP, SEXP tolSEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP max_stepsSEXP, SEXP print_procSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A0(A0SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d0(d0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma0(sigma0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type window_size(window_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type block_size(block_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< bool >::type print_proc(print_procSEXP);
+    rcpp_result_gen = Rcpp::wrap(stem_simu(response, Q, A0, d0, sigma0, theta0, tol, window_size, block_size, max_steps, print_proc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sa_penmirt
+Rcpp::List sa_penmirt(const arma::mat& response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, double lambda, arma::mat zero, arma::mat anchor, double alpha, double step, int max_steps);
+RcppExport SEXP _lvmcomp_sa_penmirt(SEXP responseSEXP, SEXP thetaSEXP, SEXP ASEXP, SEXP dSEXP, SEXP BSEXP, SEXP lambdaSEXP, SEXP zeroSEXP, SEXP anchorSEXP, SEXP alphaSEXP, SEXP stepSEXP, SEXP max_stepsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d(dSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B(BSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type zero(zeroSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type anchor(anchorSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type step(stepSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sa_penmirt(response, theta, A, d, B, lambda, zero, anchor, alpha, step, max_steps));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sa_penmirt1
+Rcpp::List sa_penmirt1(const arma::mat& response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, double lambda, arma::mat zero, arma::mat anchor, double alpha, double step, int max_steps, double scale_bound);
+RcppExport SEXP _lvmcomp_sa_penmirt1(SEXP responseSEXP, SEXP thetaSEXP, SEXP ASEXP, SEXP dSEXP, SEXP BSEXP, SEXP lambdaSEXP, SEXP zeroSEXP, SEXP anchorSEXP, SEXP alphaSEXP, SEXP stepSEXP, SEXP max_stepsSEXP, SEXP scale_boundSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d(dSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B(BSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type zero(zeroSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type anchor(anchorSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type step(stepSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type scale_bound(scale_boundSEXP);
+    rcpp_result_gen = Rcpp::wrap(sa_penmirt1(response, theta, A, d, B, lambda, zero, anchor, alpha, step, max_steps, scale_bound));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sa_penmirt2
+Rcpp::List sa_penmirt2(const arma::mat& response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, double lambda, arma::mat zero, arma::mat anchor, double alpha, double step, int max_steps);
+RcppExport SEXP _lvmcomp_sa_penmirt2(SEXP responseSEXP, SEXP thetaSEXP, SEXP ASEXP, SEXP dSEXP, SEXP BSEXP, SEXP lambdaSEXP, SEXP zeroSEXP, SEXP anchorSEXP, SEXP alphaSEXP, SEXP stepSEXP, SEXP max_stepsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d(dSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type B(BSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type zero(zeroSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type anchor(anchorSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type step(stepSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(sa_penmirt2(response, theta, A, d, B, lambda, zero, anchor, alpha, step, max_steps));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sa_mirt_conf
+Rcpp::List sa_mirt_conf(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat sigma0, arma::mat theta0, double alpha, double tol, int window_size, int block_size, int max_steps, bool print_proc);
+RcppExport SEXP _lvmcomp_sa_mirt_conf(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP sigma0SEXP, SEXP theta0SEXP, SEXP alphaSEXP, SEXP tolSEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP max_stepsSEXP, SEXP print_procSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A0(A0SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d0(d0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma0(sigma0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type window_size(window_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type block_size(block_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< bool >::type print_proc(print_procSEXP);
+    rcpp_result_gen = Rcpp::wrap(sa_mirt_conf(response, Q, A0, d0, sigma0, theta0, alpha, tol, window_size, block_size, max_steps, print_proc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test
+arma::mat test(arma::mat A, double c);
+RcppExport SEXP _lvmcomp_test(SEXP ASEXP, SEXP cSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
+    Rcpp::traits::input_parameter< double >::type c(cSEXP);
+    rcpp_result_gen = Rcpp::wrap(test(A, c));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sa_mirt_arma
+Rcpp::List sa_mirt_arma(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, const arma::mat& A_true, const arma::vec d_true, double alpha, double C0, int window_size, int block_size, int max_steps, bool print_proc);
+RcppExport SEXP _lvmcomp_sa_mirt_arma(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP A_trueSEXP, SEXP d_trueSEXP, SEXP alphaSEXP, SEXP C0SEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP max_stepsSEXP, SEXP print_procSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -121,32 +305,69 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::mat >::type A0(A0SEXP);
     Rcpp::traits::input_parameter< arma::vec >::type d0(d0SEXP);
     Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type A_true(A_trueSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type A_true(A_trueSEXP);
+    Rcpp::traits::input_parameter< const arma::vec >::type d_true(d_trueSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type C0(C0SEXP);
+    Rcpp::traits::input_parameter< int >::type window_size(window_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type block_size(block_sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
+    Rcpp::traits::input_parameter< bool >::type print_proc(print_procSEXP);
+    rcpp_result_gen = Rcpp::wrap(sa_mirt_arma(response, Q, A0, d0, theta0, A_true, d_true, alpha, C0, window_size, block_size, max_steps, print_proc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// stem_init
+Rcpp::List stem_init(const arma::mat& response, const arma::mat& Q, arma::mat A0, arma::vec d0, arma::mat theta0, int max_steps, int window_size, int block_size, double tol);
+RcppExport SEXP _lvmcomp_stem_init(SEXP responseSEXP, SEXP QSEXP, SEXP A0SEXP, SEXP d0SEXP, SEXP theta0SEXP, SEXP max_stepsSEXP, SEXP window_sizeSEXP, SEXP block_sizeSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type response(responseSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Q(QSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type A0(A0SEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type d0(d0SEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type theta0(theta0SEXP);
     Rcpp::traits::input_parameter< int >::type max_steps(max_stepsSEXP);
     Rcpp::traits::input_parameter< int >::type window_size(window_sizeSEXP);
     Rcpp::traits::input_parameter< int >::type block_size(block_sizeSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< bool >::type print_proc(print_procSEXP);
-    rcpp_result_gen = Rcpp::wrap(stem_simu(response, Q, A0, d0, theta0, A_true, max_steps, window_size, block_size, tol, print_proc));
+    rcpp_result_gen = Rcpp::wrap(stem_init(response, Q, A0, d0, theta0, max_steps, window_size, block_size, tol));
     return rcpp_result_gen;
 END_RCPP
 }
-// test_func
-arma::mat test_func(arma::mat A, int i, int j);
-RcppExport SEXP _lvmcomp_test_func(SEXP ASEXP, SEXP iSEXP, SEXP jSEXP) {
+// test_r
+arma::mat test_r(long int rows, int cols);
+RcppExport SEXP _lvmcomp_test_r(SEXP rowsSEXP, SEXP colsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type A(ASEXP);
-    Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    Rcpp::traits::input_parameter< int >::type j(jSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_func(A, i, j));
+    Rcpp::traits::input_parameter< long int >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< int >::type cols(colsSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_r(rows, cols));
+    return rcpp_result_gen;
+END_RCPP
+}
+// test_r1
+arma::mat test_r1(long int rows, int cols);
+RcppExport SEXP _lvmcomp_test_r1(SEXP rowsSEXP, SEXP colsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< long int >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< int >::type cols(colsSEXP);
+    rcpp_result_gen = Rcpp::wrap(test_r1(rows, cols));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lvmcomp_calcu_sigma_cmle_cpp", (DL_FUNC) &_lvmcomp_calcu_sigma_cmle_cpp, 2},
+    {"_lvmcomp_my_rand_unif", (DL_FUNC) &_lvmcomp_my_rand_unif, 0},
+    {"_lvmcomp_log_sum_exp2", (DL_FUNC) &_lvmcomp_log_sum_exp2, 1},
+    {"_lvmcomp_update_sigma_one_step1", (DL_FUNC) &_lvmcomp_update_sigma_one_step1, 3},
+    {"_lvmcomp_oakes", (DL_FUNC) &_lvmcomp_oakes, 7},
+    {"_lvmcomp_obj_det", (DL_FUNC) &_lvmcomp_obj_det, 2},
+    {"_lvmcomp_bfgs_update", (DL_FUNC) &_lvmcomp_bfgs_update, 4},
     {"_lvmcomp_neg_loglik_logi_partial_credit", (DL_FUNC) &_lvmcomp_neg_loglik_logi_partial_credit, 4},
     {"_lvmcomp_neg_loglik_deri_partial_credit", (DL_FUNC) &_lvmcomp_neg_loglik_deri_partial_credit, 4},
     {"_lvmcomp_my_Logistic_cpp", (DL_FUNC) &_lvmcomp_my_Logistic_cpp, 4},
@@ -154,7 +375,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lvmcomp_stem_mirtc", (DL_FUNC) &_lvmcomp_stem_mirtc, 8},
     {"_lvmcomp_stem_pcirtc", (DL_FUNC) &_lvmcomp_stem_pcirtc, 8},
     {"_lvmcomp_stem_simu", (DL_FUNC) &_lvmcomp_stem_simu, 11},
-    {"_lvmcomp_test_func", (DL_FUNC) &_lvmcomp_test_func, 3},
+    {"_lvmcomp_sa_penmirt", (DL_FUNC) &_lvmcomp_sa_penmirt, 11},
+    {"_lvmcomp_sa_penmirt1", (DL_FUNC) &_lvmcomp_sa_penmirt1, 12},
+    {"_lvmcomp_sa_penmirt2", (DL_FUNC) &_lvmcomp_sa_penmirt2, 11},
+    {"_lvmcomp_sa_mirt_conf", (DL_FUNC) &_lvmcomp_sa_mirt_conf, 12},
+    {"_lvmcomp_test", (DL_FUNC) &_lvmcomp_test, 2},
+    {"_lvmcomp_sa_mirt_arma", (DL_FUNC) &_lvmcomp_sa_mirt_arma, 13},
+    {"_lvmcomp_stem_init", (DL_FUNC) &_lvmcomp_stem_init, 9},
+    {"_lvmcomp_test_r", (DL_FUNC) &_lvmcomp_test_r, 2},
+    {"_lvmcomp_test_r1", (DL_FUNC) &_lvmcomp_test_r1, 2},
     {NULL, NULL, 0}
 };
 

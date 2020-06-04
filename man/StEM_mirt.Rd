@@ -4,8 +4,20 @@
 \alias{StEM_mirt}
 \title{Stochastic EM algorithm for solving multivariate item response theory model}
 \usage{
-StEM_mirt(response, Q, A0, d0, theta0, sigma0, m = 200, TT = 20,
-  max_attempt = 40, tol = 1.5, precision = 0.01, parallel = FALSE)
+StEM_mirt(
+  response,
+  Q,
+  A0,
+  d0,
+  theta0,
+  sigma0,
+  m = 200,
+  TT = 20,
+  max_attempt = 40,
+  tol = 1.5,
+  precision = 0.01,
+  parallel = FALSE
+)
 }
 \arguments{
 \item{response}{N by J matrix containing 0/1 responses, where N is the number of respondents and J is the number of items.}

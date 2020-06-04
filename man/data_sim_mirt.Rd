@@ -4,7 +4,9 @@
 \name{data_sim_mirt}
 \alias{data_sim_mirt}
 \title{Simulated dataset for multivariate item response theory model.}
-\format{An object of class \code{list} of length 9.}
+\format{
+An object of class \code{list} of length 9.
+}
 \usage{
 data_sim_mirt
 }
