@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - master
-      - refs/tags/@orgname/cmdcheck
+      - refs/tags/cmdcheck
   pull_request:
     branches:
       - master
