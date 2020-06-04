@@ -221,6 +221,8 @@ arma::mat soft_thre(arma::mat x, arma::mat mu){
   y.elem( arma::find(x < 0)) *= -1;
   return y;
 }
+
+// Original first-order stochastic proximal gradient descent
 void RM_update(const arma::mat &response, const arma::mat &theta, 
                arma::mat &A, arma::vec &d, arma::mat &B, 
                double lambda, arma::mat zero, arma::mat anchor,
@@ -289,6 +291,8 @@ Rcpp::List sa_penmirt(const arma::mat &response, arma::mat theta, arma::mat A, a
                             Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
                             Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t());
 }
+
+// stochastic proximal gradient descent with pseudo second-order information
 void RM_update1(const arma::mat &response, const arma::mat &theta, 
                arma::mat &A, arma::vec &d, arma::mat &B, 
                double lambda, arma::mat zero, arma::mat anchor,
@@ -364,6 +368,7 @@ Rcpp::List sa_penmirt1(const arma::mat &response, arma::mat theta, arma::mat A, 
                             Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
                             Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t());
 }
+// stochastic proximal gradient descent with acceleration
 void RM_update2(const arma::mat &response, const arma::mat &theta, 
                arma::mat &A, arma::vec &d, arma::mat &B, 
                double lambda, arma::mat zero, arma::mat anchor,

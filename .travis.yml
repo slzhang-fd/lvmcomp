@@ -7,7 +7,11 @@ cache: packages
 
 r:
   - release
+    env:
+      - VDIFFR_RUN_TESTS=true
+      - VDIFFR_LOG_PATH="../vdiffr.Rout.fail"
   - devel
+    env: _R_CHECK_SYSTEM_CLOCK_=false
   
 r_binary_packages:
   - Rcpp
