@@ -1,4 +1,5 @@
 [![cran checks](https://cranchecks.info/badges/summary/lvmcomp)](https://cran.r-project.org/web/checks/check_results_lvmcomp.html)
+[![R build status](https://github.com/slzhang-fd/lvmcomp/workflows/R-CMD-check/badge.svg)](https://github.com/slzhang-fd/lvmcomp/actions?workflow=R-CMD-check)
 [![Travis-CI Build Status](https://travis-ci.com/slzhang-fd/lvmcomp.svg?branch=master)](https://travis-ci.com/slzhang-fd/lvmcomp)
 [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/lvmcomp)](https://cran.r-project.org/package=lvmcomp)
 [![downloads](http://cranlogs.r-pkg.org/badges/lvmcomp)](https://www.rdocumentation.org/trends)
