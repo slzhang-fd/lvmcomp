@@ -2,6 +2,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'cmdcheck'
   pull_request:
     branches:
       - master
