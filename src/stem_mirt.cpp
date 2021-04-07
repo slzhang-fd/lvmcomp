@@ -10,10 +10,10 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
                      arma::mat A0, arma::vec d0, arma::mat theta0, 
                      arma::mat sigma0, int T, bool parallel){
   // configuration of multitreading
-  if(!parallel)
-    omp_set_num_threads(1);
-  else
-    omp_set_num_threads(omp_get_num_procs());
+  // if(!parallel)
+  //   omp_set_num_threads(1);
+  // else
+  //   omp_set_num_threads(omp_get_num_procs());
   
   // obtain dimensions from input data
   int N = response.n_rows;
@@ -35,14 +35,13 @@ Rcpp::List stem_mirtc(const arma::mat &response, const arma::mat &Q,
     else{
       inv_sigma = arma::inv_sympd(sigma0);
     }
-#pragma omp parallel for
     for(unsigned int i=0;i<N;++i){
       // theta0.row(i) = sample_theta_i_myars(x, theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, d0).t();
       theta0.row(i) = sample_theta_i_arms(theta0.row(i).t(), response.row(i).t(), inv_sigma, A0, d0).t();
     }
     // M step
     if(K > 1){
-      sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-5);
+      sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-8);
     }
     for(unsigned int j=0;j<J;++j){
       rv(0) = j;
@@ -99,7 +98,7 @@ Rcpp::List stem_pcirtc(const arma::umat &response, const arma::mat &Q,
     // M step
     // tt = clock();
     if(K > 1){
-      sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-5);
+      sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-8);
     }
     for(unsigned int j=0;j<J;++j){
       arma::uvec rv(1), cv;
@@ -124,16 +123,15 @@ Rcpp::List stem_pcirtc(const arma::umat &response, const arma::mat &Q,
 //' @export
 // [[Rcpp::export]]
 Rcpp::List stem_simu(const arma::mat &response, const arma::mat &Q,
-                      arma::mat A0, arma::vec d0, arma::mat sigma0,
-                      arma::mat theta0, 
-                      double tol, int window_size=40, 
-                      int block_size=20, int max_steps=2000,
+                      arma::mat A0, arma::vec d0, arma::mat B0,
+                      arma::mat theta0, int ave_from = 100,
+                      int max_steps=200,
                       bool print_proc=true){
   long int N = response.n_rows;
   long int J = response.n_cols;
   long int K = A0.n_cols;
-  bool arrive_flag = true;
   
+  arma::mat sigma0 = B0.t() * B0;
   arma::mat inv_sigma0 = arma::inv_sympd(sigma0);
   arma::uvec rv(1), cv;
   // arma::vec log_lik = arma::zeros(max_steps);
@@ -142,15 +140,14 @@ Rcpp::List stem_simu(const arma::mat &response, const arma::mat &Q,
   arma::mat A_hat = A0;
   arma::vec d_hat = d0;
   arma::mat sigma_hat = sigma0;
-  arma::mat A_hat_all = arma::zeros(J*K, max_steps);
-  arma::mat d_hat_all = arma::zeros(J, max_steps);
-  arma::mat sigma_hat_all = arma::zeros(K*K, max_steps);
+  // arma::mat A_hat_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_hat_all = arma::zeros(J, max_steps);
+  // arma::mat B_hat_all = arma::zeros(K*K, max_steps);
 
-  long int mcn0 = 0;
-  long int mcn = 0;
-  for(mcn=0;mcn<max_steps;++mcn){
+  int mcn = 1;
+  for(mcn=1;mcn<max_steps;++mcn){
     Rcpp::checkUserInterrupt();
-    // if(print_proc) Rprintf("\rStep  %d\t| ", mcn+1);
+    if(print_proc) Rprintf("\rStep  %d\t| ", mcn+1);
     
     // E step
     for(unsigned long int i=0;i<N;++i){
@@ -159,14 +156,14 @@ Rcpp::List stem_simu(const arma::mat &response, const arma::mat &Q,
     if(theta0.has_nan()){
       Rcpp::stop("nan in theta0\n");
     }
+    
     // M step
-    if(K > 1){
-      sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-5);
-      if(!sigma0.is_sympd()){
-        Rcpp::stop("error after calcu_sigma\n");
-      }
-      inv_sigma0 = arma::inv_sympd(sigma0);
-    }
+    sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-8);
+    inv_sigma0 = arma::inv_sympd(sigma0);
+    // B0 = calcu_sigma_cmle_cpp1(theta0);
+    // sigma0 = B0.t() * B0;
+    // inv_sigma0 = arma::inv_sympd(sigma0);
+    
     for(unsigned int j=0;j<J;++j){
       rv(0) = j;
       cv = arma::find(Q.row(j));
@@ -176,46 +173,31 @@ Rcpp::List stem_simu(const arma::mat &response, const arma::mat &Q,
     }
     
     // calculate A_hat based on burnin length
-    if(arrive_flag){
-      double mcn_count = mcn - mcn0 + 1.0;
-      A_hat = mcn_count / (mcn_count + 1.0) * A_hat + 1.0 / (mcn_count + 1.0) * A0;
-      d_hat = mcn_count / (mcn_count + 1.0) * d_hat + 1.0 / (mcn_count + 1.0) * d0;
-      sigma_hat = mcn_count / (mcn_count + 1.0) * sigma_hat + 1.0 / (mcn_count + 1.0) * sigma0;
+    if(mcn<ave_from){
+      A_hat = A0;
+      d_hat = d0;
+      sigma_hat = sigma0;
     }
-    // else{
-    //   A_hat = A0;
-    //   d_hat = d0;
-    //   sigma_hat = sigma0;
-    //   
-    //   log_lik(mcn) = log_full_likelihood(response, A0, d0, theta0, inv_sigma0);
-    //   if(!(mcn%block_size) && mcn>=(window_size-1)){
-    //     double m1 = arma::mean(log_lik.subvec(mcn-window_size+1, mcn-window_size+(int)(0.1*window_size)));
-    //     double m2 = arma::mean(log_lik.subvec(mcn-(int)(0.5*window_size), mcn-1));
-    //     if(std::abs(m1-m2) < tol){
-    //       arrive_flag = true;
-    //       mcn0 = mcn;
-    //       max_steps = std::min(max_steps, (int)(mcn+window_size));
-    //       if(print_proc) Rcpp::Rcout << "stem burn in finish at " << mcn << std::endl;
-    //     }
-    //     else{
-    //       if(print_proc) Rcpp::Rcout << "log likelihood mean diff: " << std::abs(m1-m2) << std::endl;
-    //     }
-    //   }
-    // }
-    
-    A_hat_all.col(mcn) = arma::vectorise(A_hat);
-    d_hat_all.col(mcn) = d_hat;
-    sigma_hat_all.col(mcn) = arma::vectorise(sigma_hat);
+    else{
+      double mcn0 = mcn - ave_from;
+      A_hat = A_hat * mcn0 / (mcn0+1.0) + A0 / (mcn0+1.0);
+      d_hat = d_hat * mcn0 / (mcn0+1.0) + d0 / (mcn0+1.0);
+      sigma_hat = sigma_hat * mcn0 / (mcn0+1.0) + sigma0 / (mcn0+1.0);
+    }
+    // A_hat_all.col(mcn) = arma::vectorise(A_hat);
+    // d_hat_all.col(mcn) = d_hat;
+    // B_hat_all.col(mcn) = arma::vectorise(B_hat);
 
   }
   return Rcpp::List::create(Rcpp::Named("A_hat") = A_hat,
                             Rcpp::Named("d_hat") = d_hat,
-                            Rcpp::Named("sigma_hat") = sigma_hat,
-                            Rcpp::Named("A_hat_all") = A_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("sigma_hat_all") = sigma_hat_all.cols(0, max_steps-1).t());
+                            Rcpp::Named("sigma_hat") = sigma_hat);
+                            // Rcpp::Named("A_hat_all") = A_hat_all.cols(0, mcn-1).t(),
+                            // Rcpp::Named("d_hat_all") = d_hat_all.cols(0, mcn-1).t(),
+                            // Rcpp::Named("B_hat_all") = B_hat_all.cols(0, mcn-1).t());
+
 }
-arma::mat soft_thre(arma::mat x, arma::mat mu){
+arma::mat soft_thre(const arma::mat &x, const arma::mat &mu){
   arma::mat y = arma::abs(x) - mu;
   y.elem( arma::find(y < 0)).zeros();
   y.elem( arma::find(x < 0)) *= -1;
@@ -234,7 +216,7 @@ void RM_update(const arma::mat &response, const arma::mat &theta,
   M = 1.0 / (1.0 + arma::exp(-M));
   arma::mat A_deriv = (response - M).t() * theta / N; 
   A_deriv %= (1 - zero);
-  arma::vec d_deriv = arma::sum(response - M, 0).t() / J;
+  arma::vec d_deriv = arma::sum(response - M, 0).t() / N;
 
 
   A += step_n * A_deriv;
@@ -294,50 +276,100 @@ Rcpp::List sa_penmirt(const arma::mat &response, arma::mat theta, arma::mat A, a
 
 // stochastic proximal gradient descent with pseudo second-order information
 void RM_update1(const arma::mat &response, const arma::mat &theta, 
-               arma::mat &A, arma::vec &d, arma::mat &B, 
-               double lambda, arma::mat zero, arma::mat anchor,
-               double alpha, double step_n, double scale_bound){
+                    arma::mat &A, arma::mat &A_res1, arma::mat &A_res2, arma::mat &A_mis_info,
+                    arma::vec &d, arma::vec &d_res1, arma::vec &d_res2, arma::mat &d_mis_info,
+                    arma::mat &B, arma::mat &B_res1, arma::mat &B_res2, arma::mat &B_mis_info,
+                    double lambda, arma::mat zero, arma::mat anchor,
+                    int mcn, double alpha, double step, double c1, double c2){
   int N = response.n_rows;
   int J = response.n_cols;
   int K = A.n_cols;
+  double step_n = step * std::pow(mcn, -alpha);
   arma::mat M = theta * A.t();
   M.each_row() += d.t();
   M = 1.0 / (1.0 + arma::exp(-M));
+  
+  // update A
   arma::mat A_deriv = (response - M).t() * theta / N; 
   A_deriv %= (1 - zero);
-  arma::mat A_scale = (M % (1-M)).t() * (theta % theta) / N;
-  //Rcpp::Rcout << A_scale << std::endl;
-  A_scale = arma::max(1.0/A_scale, scale_bound * arma::ones(J,K));
-
-  A += step_n * (A_deriv % A_scale);
-  A = soft_thre(A, (1-anchor) % A_scale * lambda * step_n);
+  A_res1 += step_n * (A_deriv - A_res1);
+  A_res2 += step_n * ((M % (1-M)).t() * (theta % theta) / N - arma::square(A_deriv) - A_res2);
+  A_mis_info = A_mis_info * (mcn-1.0)/mcn +
+    arma::min(arma::max(A_res2 + arma::square(A_res1), c1*arma::ones(J,K)), c2*arma::ones(J,K))/mcn;
+  A += step_n * (A_deriv / A_mis_info);
+  A = soft_thre(A, (1-anchor) / A_mis_info * lambda * step_n);
   
-  arma::vec d_deriv = arma::sum(response - M, 0).t() / J;
-  arma::vec d_scale = arma::sum(M % (1-M), 0).t() / J;
-  //Rcpp::Rcout << d_scale << std::endl;
-  d_scale = arma::max(1.0 / d_scale, scale_bound * arma::ones(J));
-  d += step_n * (d_deriv % d_scale);
-  B = update_sigma_one_step1(theta, B, step_n/N);
+  // update d
+  arma::vec d_deriv = arma::sum(response - M, 0).t() / N;
+  d_res1 += step_n * (d_deriv - d_res1);
+  d_res2 += step_n * (arma::sum(M % (1-M), 0).t() / N - arma::square(d_deriv) - d_res2);
+  d_mis_info = d_mis_info * (mcn-1.0)/mcn + 
+    arma::min(arma::max(d_res2 + arma::square(d_res1), c1*arma::ones(J)),c2*arma::ones(J))/mcn;
+  // arma::vec d_scale = arma::min(arma::max(1.0 / d_mis_info, c1 * arma::ones(J)),c2*arma::ones(J));
+  d += step_n * (d_deriv / d_mis_info);
+  
+  B = update_sigma_one_step2(theta, B, B_res1, B_res2, B_mis_info, mcn, alpha, step, c1, c2);
 }
+// void RM_update1(const arma::mat &response, const arma::mat &theta, 
+//                arma::mat &A, arma::vec &d, arma::mat &B, 
+//                double lambda, arma::mat zero, arma::mat anchor,
+//                double alpha, double step_n, double scale_bound){
+//   int N = response.n_rows;
+//   int J = response.n_cols;
+//   int K = A.n_cols;
+//   arma::mat M = theta * A.t();
+//   M.each_row() += d.t();
+//   M = 1.0 / (1.0 + arma::exp(-M));
+//   arma::mat A_deriv = (response - M).t() * theta / N; 
+//   A_deriv %= (1 - zero);
+//   arma::mat A_scale = (M % (1-M)).t() * (theta % theta) / N;
+//   //Rcpp::Rcout << A_scale << std::endl;
+//   A_scale = arma::max(1.0/A_scale, scale_bound * arma::ones(J,K));
+// 
+//   A += step_n * (A_deriv % A_scale);
+//   A = soft_thre(A, (1-anchor) % A_scale * lambda * step_n);
+//   
+//   arma::vec d_deriv = arma::sum(response - M, 0).t() / J;
+//   arma::vec d_scale = arma::sum(M % (1-M), 0).t() / J;
+//   //Rcpp::Rcout << d_scale << std::endl;
+//   d_scale = arma::max(1.0 / d_scale, scale_bound * arma::ones(J));
+//   d += step_n * (d_deriv % d_scale);
+//   B = update_sigma_one_step1(theta, B, step_n/N);
+// }
 //' @export
 // [[Rcpp::export]]
 Rcpp::List sa_penmirt1(const arma::mat &response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, 
                       double lambda, arma::mat zero, arma::mat anchor, double alpha,
-                      double step=1, int max_steps=200, double scale_bound=1){
+                      double step=1, int ave_from = 50,int max_steps=200, double tol = 0.01){
   int N = response.n_rows;
   int J = response.n_cols;
   int K = B.n_cols;
   arma::mat A_hat = A;
   arma::vec d_hat = d;
   arma::mat B_hat = B;
+  arma::mat A_all = arma::zeros(J*K, max_steps);
+  arma::mat d_all = arma::zeros(J, max_steps);
+  arma::mat B_all = arma::zeros(K*K, max_steps);
   arma::mat A_hat_all = arma::zeros(J*K, max_steps);
   arma::mat d_hat_all = arma::zeros(J, max_steps);
   arma::mat B_hat_all = arma::zeros(K*K, max_steps);
   
+  arma::mat A_res1 = arma::zeros(J,K);
+  arma::mat A_res2 = arma::zeros(J,K);
+  arma::mat A_mis_info = arma::zeros(J,K);
+  arma::vec d_res1 = arma::zeros(J);
+  arma::vec d_res2 = arma::zeros(J);
+  arma::vec d_mis_info = arma::zeros(J);
+  arma::mat B_res1 = arma::zeros(K,K);
+  arma::mat B_res2 = arma::zeros(K,K);
+  arma::mat B_mis_info = arma::zeros(K,K);
+  
   arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
-  for(int mcn=1; mcn <= max_steps; mcn++){
+  int mcn=1;
+  double eps = 1.0;
+  for(mcn=1; mcn < max_steps && eps > tol; mcn++){
     Rcpp::checkUserInterrupt();
-    
+    Rcpp::Rcout << "\r iter: " << mcn <<" eps: " << eps;
     // stochastic E step
     for(unsigned long int i=0;i<N;++i){
       theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
@@ -345,303 +377,560 @@ Rcpp::List sa_penmirt1(const arma::mat &response, arma::mat theta, arma::mat A, 
     if(theta.has_nan()){
       Rcpp::stop("nan in theta0\n");
     }
-    // Robbins-Monro update
-    double factor = std::pow(mcn, -alpha);
-    double step_n = factor * step;
-    RM_update1(response, theta, A, d, B, lambda, zero, anchor, alpha, step_n, scale_bound);
+    // RM_update1(response, theta, A, d, B, lambda, zero, anchor, alpha, step_n, scale_bound);
+    RM_update1(response, theta, A, A_res1, A_res2, A_mis_info,
+                   d, d_res1, d_res2, d_mis_info,
+                   B, B_res1, B_res2, B_mis_info,
+                   lambda, zero, anchor,
+                   mcn, alpha, step, 1e-3, 1000);
     inv_sigma = arma::inv_sympd(B.t() * B);
     
     // Ruppert-averaging
-    A_hat = A_hat * mcn / (mcn+1.0) + A / (mcn+1.0);
-    //A_hat = soft_thre(A_hat, (1-anchor) * lambda * factor);
-    d_hat = d_hat * mcn / (mcn+1.0) + d / (mcn+1.0);
-    B_hat = arma::normalise(B_hat * mcn / (mcn+1.0) + B / (mcn+1.0));
-    
+    if(mcn<ave_from){
+      A_hat = A;
+      d_hat = d;
+      B_hat = B;
+    }
+    else{
+      double mcn0 = mcn - ave_from;
+      A_hat = A_hat * mcn0 / (mcn0+1.0) + A / (mcn0+1.0);
+      d_hat = d_hat * mcn0 / (mcn0+1.0) + d / (mcn0+1.0);
+      B_hat = arma::normalise(B_hat * mcn0 / (mcn0+1.0) + B / (mcn0+1.0));
+    }
+    A_all.col(mcn-1) = arma::vectorise(A_hat);
+    d_all.col(mcn-1) = d_hat;
+    B_all.col(mcn-1) = arma::vectorise(B_hat);
     A_hat_all.col(mcn-1) = arma::vectorise(A_hat);
     d_hat_all.col(mcn-1) = d_hat;
     B_hat_all.col(mcn-1) = arma::vectorise(B_hat);
+    if(mcn>=ave_from){
+      double eps_A = std::max(arma::max(arma::abs(A_all.col(mcn-1) - A_all.col(mcn-2))),
+                              arma::max(arma::abs(A_all.col(mcn-2) - A_all.col(mcn-3))));
+      double eps_d = std::max(arma::max(arma::abs(d_all.col(mcn-1) - d_all.col(mcn-2))),
+                              arma::max(arma::abs(d_all.col(mcn-2) - d_all.col(mcn-3))));
+      double eps_B = std::max(arma::max(arma::abs(B_all.col(mcn-1) - B_all.col(mcn-2))),
+                              arma::max(arma::abs(B_all.col(mcn-2) - B_all.col(mcn-3))));
+      eps = std::max({eps_A, eps_d, eps_B});
+    }
+
   }
   return Rcpp::List::create(Rcpp::Named("A_hat")=soft_thre(A_hat, (1-anchor) * lambda),
                             Rcpp::Named("d_hat")=d_hat,
                             Rcpp::Named("Sigma_hat")=B_hat.t() * B_hat,
-                            Rcpp::Named("A_hat_all") = A_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t());
+                            Rcpp::Named("A_hat_all") = A_hat_all.cols(0, mcn-2).t(),
+                            Rcpp::Named("d_hat_all") = d_hat_all.cols(0, mcn-2).t(),
+                            Rcpp::Named("B_hat_all") = B_hat_all.cols(0, mcn-2).t());
 }
 // stochastic proximal gradient descent with acceleration
-void RM_update2(const arma::mat &response, const arma::mat &theta, 
-               arma::mat &A, arma::vec &d, arma::mat &B, 
-               double lambda, arma::mat zero, arma::mat anchor,
-               double alpha, double step_n){
+// void RM_update2(const arma::mat &response, const arma::mat &theta, 
+//                const arma::mat &A, const arma::vec &d, const arma::mat &B, 
+//                arma::mat &A_s, arma::vec &d_s, arma::mat &B_s,
+//                double lambda, arma::mat zero, arma::mat anchor,
+//                double alpha, double step_n){
+//   int N = response.n_rows;
+//   int J = response.n_cols;
+//   arma::mat M = theta * A.t();
+//   M.each_row() += d.t();
+//   M = 1.0 / (1.0 + arma::exp(-M));
+//   arma::mat A_deriv = (response - M).t() * theta / N; 
+//   A_deriv %= (1 - zero);
+//   arma::vec d_deriv = arma::sum(response - M, 0).t() / J;
+//   
+//   
+//   A_s = A + step_n * A_deriv;
+//   A_s = soft_thre(A_s, (1-anchor) * lambda * step_n);
+//   d_s = d + step_n * d_deriv;
+//   B_s = update_sigma_one_step1(theta, B, step_n/N);
+// }
+// //' @export
+// // [[Rcpp::export]]
+// Rcpp::List sa_penmirt2(const arma::mat &response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, 
+//                       double lambda, arma::mat zero, arma::mat anchor, double alpha,
+//                       double step=1, int max_steps=200){
+//   int N = response.n_rows;
+//   int J = response.n_cols;
+//   int K = B.n_cols;
+//   arma::mat A_s = A;
+//   arma::vec d_s = d;
+//   arma::mat B_s = B;
+//   arma::mat A_s_old = A;
+//   arma::vec d_s_old = d;
+//   arma::mat B_s_old = B;
+//   
+//   arma::mat A_hat_all = arma::zeros(J*K, max_steps);
+//   arma::mat d_hat_all = arma::zeros(J, max_steps);
+//   arma::mat B_hat_all = arma::zeros(K*K, max_steps);
+//   
+//   arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
+//   for(int mcn=1; mcn <= max_steps; mcn++){
+//     Rcpp::checkUserInterrupt();
+//     
+//     // stochastic E step
+//     for(unsigned long int i=0;i<N;++i){
+//       theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
+//     }
+//     if(theta.has_nan()){
+//       Rcpp::stop("nan in theta0\n");
+//     }
+//     // Robbins-Monro update
+//     double factor = std::pow(mcn, -alpha);
+//     double step_n = factor * step;
+//     RM_update2(response, theta, A, d, B, A_s, d_s, B_s, lambda, zero, anchor, alpha, step_n);
+//     
+//     A = A_s + (mcn-1)/(mcn+2) * (A_s - A_s_old);
+//     d = d_s + (mcn-1)/(mcn+2) * (d_s - d_s_old);
+//     B = B_s + (mcn-1)/(mcn+2) * (B_s - B_s_old);
+//     
+//     A_s_old = A_s;
+//     d_s_old = d_s;
+//     B_s_old = B_s;
+//     
+//     inv_sigma = arma::inv_sympd(B_s.t() * B_s);
+//     
+//     // // Ruppert-averaging
+//     // A_hat = A_hat * mcn / (mcn+1.0) + A / (mcn+1.0);
+//     // //A_hat = soft_thre(A_hat, (1-anchor) * lambda * factor);
+//     // d_hat = d_hat * mcn / (mcn+1.0) + d / (mcn+1.0);
+//     // B_hat = arma::normalise(B_hat * mcn / (mcn+1.0) + B / (mcn+1.0));
+//     
+//     A_hat_all.col(mcn-1) = arma::vectorise(A_s);
+//     d_hat_all.col(mcn-1) = d_s;
+//     B_hat_all.col(mcn-1) = arma::vectorise(B_s);
+//   }
+//   return Rcpp::List::create(Rcpp::Named("A_hat")=soft_thre(A_s, (1-anchor) * lambda),
+//                             Rcpp::Named("d_hat")=d_s,
+//                             Rcpp::Named("Sigma_hat")=B_s.t() * B_s,
+//                             Rcpp::Named("A_hat_all") = A_hat_all.cols(0, max_steps-1).t(),
+//                             Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
+//                             Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t());
+// }
+
+void RM_update_conf(const arma::mat &response, const arma::mat &theta, 
+                arma::mat &A, arma::mat &A_res1, arma::mat &A_res2, arma::mat &A_mis_info,
+                const arma::mat &Q, 
+                arma::vec &d, arma::vec &d_res1, arma::vec &d_res2, arma::vec &d_mis_info,
+                arma::mat &B, arma::mat &B_res1, arma::mat &B_res2, arma::mat &B_mis_info,
+                int mcn, double alpha, double step, double c1, double c2){
   int N = response.n_rows;
   int J = response.n_cols;
+  int K = A.n_cols;
+  
+  double step_n = step * std::pow(mcn, -alpha);
+  
   arma::mat M = theta * A.t();
   M.each_row() += d.t();
   M = 1.0 / (1.0 + arma::exp(-M));
+  
+  // update A
   arma::mat A_deriv = (response - M).t() * theta / N; 
-  A_deriv %= (1 - zero);
-  arma::vec d_deriv = arma::sum(response - M, 0).t() / J;
+  A_deriv %= Q;
+  A_res1 += step_n * (A_deriv - A_res1);
+  A_res2 += step_n * ((M % (1-M)).t() * (theta % theta) / N - arma::square(A_deriv) - A_res2);
+  A_mis_info = A_mis_info * (mcn-1.0)/mcn + 
+    arma::min(arma::max(A_res2 + arma::square(A_res1), c1 * arma::ones(J,K)), c2*arma::ones(J,K))/mcn;
+  // Rcpp::Rcout << A_scale[0] << std::endl;
+  A += step_n * (A_deriv / A_mis_info);
   
-  
-  A += step_n * A_deriv;
-  A = soft_thre(A, (1-anchor) * lambda * step_n);
-  d += step_n * d_deriv;
-  B = update_sigma_one_step1(theta, B, step_n/N);
+  // update d
+  arma::vec d_deriv = arma::sum(response - M, 0).t() / N;
+  d_res1 += step_n * (d_deriv - d_res1);
+  d_res2 += step_n * (arma::sum(M % (1-M), 0).t() / N - arma::square(d_deriv) - d_res2);
+  d_mis_info = d_mis_info * (mcn-1.0)/mcn + 
+    arma::min(arma::max(d_res2 + arma::square(d_res1), c1*arma::ones(J)),c2*arma::ones(J))/mcn;
+  // Rcpp::Rcout << d_scale[0] << std::endl;
+  d += step_n * (d_deriv / d_mis_info);
+  B = update_sigma_one_step2(theta, B, B_res1, B_res2, B_mis_info, mcn, alpha, step, c1, c2);
 }
+
 //' @export
 // [[Rcpp::export]]
-Rcpp::List sa_penmirt2(const arma::mat &response, arma::mat theta, arma::mat A, arma::vec d, arma::mat B, 
-                      double lambda, arma::mat zero, arma::mat anchor, double alpha,
-                      double step=1, int max_steps=200){
-  int N = response.n_rows;
-  int J = response.n_cols;
-  int K = B.n_cols;
+Rcpp::List sa_mirt_conf(const arma::mat &response, 
+                        arma::mat A, const arma::mat &Q, arma::vec d,
+                        arma::mat B, arma::mat theta,
+                        double alpha, double step = 1.0,
+                        int ave_from = 100, int max_steps = 200){
+  long int N = response.n_rows;
+  long int J = response.n_cols;
+  long int K = A.n_cols;
+
+  arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
+
   arma::mat A_hat = A;
   arma::vec d_hat = d;
   arma::mat B_hat = B;
-  arma::mat A_hat_all = arma::zeros(J*K, max_steps);
-  arma::mat d_hat_all = arma::zeros(J, max_steps);
-  arma::mat B_hat_all = arma::zeros(K*K, max_steps);
+  // arma::mat A_hat_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_hat_all = arma::zeros(J, max_steps);
+  // arma::mat B_hat_all = arma::zeros(K*K, max_steps);
+  // arma::mat A_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_all = arma::zeros(J, max_steps);
+  // arma::mat B_all = arma::zeros(K*K, max_steps);
   
-  arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
-  for(int mcn=1; mcn <= max_steps; mcn++){
+  arma::mat A_res1 = arma::zeros(J,K);
+  arma::mat A_res2 = arma::zeros(J,K);
+  arma::mat A_mis_info = arma::zeros(J,K);
+  arma::vec d_res1 = arma::zeros(J);
+  arma::vec d_res2 = arma::zeros(J);
+  arma::vec d_mis_info = arma::zeros(J);
+  arma::mat B_res1 = arma::zeros(K,K);
+  arma::mat B_res2 = arma::zeros(K,K);
+  arma::mat B_mis_info = arma::zeros(K,K);
+  // arma::vec log_lik = arma::zeros(max_steps);
+
+  // int param_num = arma::accu(Q) + J + K*(K-1)/2;
+  // arma::vec s;
+  // arma::vec res2 = arma::zeros(param_num);
+  // arma::mat res1 = arma::zeros(param_num, param_num);
+  // arma::vec mis_info2 = arma::zeros(param_num);
+  // arma::mat mis_info1 = arma::zeros(param_num, param_num);
+  int mcn = 1;
+  for(mcn=1; mcn < max_steps; mcn++){
     Rcpp::checkUserInterrupt();
-    
-    // stochastic E step
-    for(unsigned long int i=0;i<N;++i){
+    // sampling process
+    for(int i=0;i<N;++i){
       theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
     }
     if(theta.has_nan()){
       Rcpp::stop("nan in theta0\n");
     }
-    // Robbins-Monro update
-    double factor = std::pow(mcn, -alpha);
-    double step_n = factor * step;
-    RM_update2(response, theta, A, d, B, lambda, zero, anchor, alpha, step_n);
+
+    // calculate missing information
+    // s = s_func(theta, response, Q, inv_sigma, A, d);
+    // res1 += factor * (h_func(theta, response, Q, inv_sigma, A, d) - s * s.t() - res1);
+    // res2 += factor * (s - res2);
+    // mis_info1 = mis_info1 * mcn / (mcn+1.0) + res1 / (mcn+1.0);
+    // mis_info2 = mis_info2 * mcn / (mcn+1.0) + res2 / (mcn+1.0);
+    
+    // Robbin-Monro update
+    RM_update_conf(response, theta, A, A_res1, A_res2, A_mis_info, Q,
+                   d, d_res1, d_res2, d_mis_info,
+                   B, B_res1, B_res2, B_mis_info,
+                   mcn, alpha, step, 1e-3, 1000);
     inv_sigma = arma::inv_sympd(B.t() * B);
-    
+
     // Ruppert-averaging
-    A_hat = A_hat * mcn / (mcn+1.0) + A / (mcn+1.0);
-    //A_hat = soft_thre(A_hat, (1-anchor) * lambda * factor);
-    d_hat = d_hat * mcn / (mcn+1.0) + d / (mcn+1.0);
-    B_hat = arma::normalise(B_hat * mcn / (mcn+1.0) + B / (mcn+1.0));
+    // epsA = arma::abs(A_hat-A).max()/(mcn+1.0);
+    // epsd = arma::abs(d_hat-d).max()/(mcn+1.0);
+    // epsB = arma::abs(B_hat-B).max()/(mcn+1.0);
+    // eps = std::max({epsA,epsd,epsB});
+    // Rcpp::Rcout << "\r iter: " << mcn << " eps: " << eps;
+    if(mcn<ave_from){
+      A_hat = A;
+      d_hat = d;
+      B_hat = B;
+    }
+    else{
+      double mcn0 = mcn - ave_from;
+      A_hat = A_hat * mcn0 / (mcn0+1.0) + A / (mcn0+1.0);
+      d_hat = d_hat * mcn0 / (mcn0+1.0) + d / (mcn0+1.0);
+      B_hat = arma::normalise(B_hat * mcn0 / (mcn0+1.0) + B / (mcn0+1.0));
+    }
     
-    A_hat_all.col(mcn-1) = arma::vectorise(A_hat);
-    d_hat_all.col(mcn-1) = d_hat;
-    B_hat_all.col(mcn-1) = arma::vectorise(B_hat);
-  }
-  return Rcpp::List::create(Rcpp::Named("A_hat")=soft_thre(A_hat, (1-anchor) * lambda),
-                            Rcpp::Named("d_hat")=d_hat,
-                            Rcpp::Named("Sigma_hat")=B_hat.t() * B_hat,
-                            Rcpp::Named("A_hat_all") = A_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t());
-}
-//' @export
-// [[Rcpp::export]]
-Rcpp::List sa_mirt_conf(const arma::mat &response, const arma::mat &Q,
-                        arma::mat A0, arma::vec d0, arma::mat sigma0, arma::mat theta0,
-                        double alpha, double tol,
-                        int window_size=40, int block_size = 20, 
-                        int max_steps = 2000, bool print_proc = true){
-  long int N = response.n_rows;
-  long int J = response.n_cols;
-  long int K = A0.n_cols;
-  
-  arma::mat inv_sigma0 = arma::inv_sympd(sigma0);
-  arma::mat B0 = arma::chol(sigma0);
-  
-  
-  arma::mat A_hat = A0;
-  arma::vec d_hat = d0;
-  arma::mat B_hat = B0;
-  arma::mat A_deriv = arma::zeros(J,K);
-  arma::vec d_deriv = arma::zeros(J);
-  arma::mat A_deriv_all = arma::zeros(J*K, max_steps);
-  arma::mat d_deriv_all = arma::zeros(J, max_steps);
-  arma::mat A_hat_all = arma::zeros(J*K, max_steps);
-  arma::mat d_hat_all = arma::zeros(J, max_steps);
-  arma::mat B_hat_all = arma::zeros(K*K, max_steps);
-  
-  // arma::vec log_lik = arma::zeros(max_steps);
-  // arma::uvec rv(1), cv;
-  long int mcn0 = 0;
-  long int mcn = 0;
-  bool arrive_flag = true;
-  int param_num = arma::accu(Q) + J + K*(K-1)/2;
-  arma::vec s;
-  arma::vec res2 = arma::zeros(param_num);
-  arma::mat res1 = arma::zeros(param_num, param_num);
-  // arma::vec s = s_func(theta0, response, Q, sigma0, A0, d0);
-  // arma::mat res1 = (h_func(theta0, response, Q, sigma0, A0, d0) - s * s.t());
-  // arma::vec res2 = s;
-  
-  arma::vec mis_info2 = arma::zeros(param_num);
-  arma::mat mis_info1 = arma::zeros(param_num, param_num);
-  
-  arma::vec check_info1 = arma::zeros(max_steps);
-  arma::vec check_info2 = arma::zeros(max_steps);
-  // arma::uvec A_free_ind = arma::find(arma::vectorise(Q) > 0);
-  
-  // for(unsigned int i=0;i<N;++i){
-  //   theta0.row(i) = sample_theta_i_arms(theta0.row(i).t(), response.row(i).t(), inv_sigma0, A0, d0).t();
-  // }
-  // if(theta0.has_nan()){
-  //   Rcpp::stop("nan in theta0\n");
-  // }
-  // Rcpp::List init_res = Update_init_sa(theta0, response, A0, Q, d0, inv_sigma0);
-  // double step_A = init_res[0];
-  // double step_d = init_res[1];
-  // arma::mat A1 = init_res[2];
-  // arma::vec d1 = init_res[3];
-  // A0 = A1;
-  // d0 = d1;
-  double step_B = 1.0 / (double)N;
-  double step_a = 1.0 / (double)N;
-  double step_d = 1.0 / (double)N;
-  for(mcn=0; mcn < max_steps; mcn++){
-    Rcpp::checkUserInterrupt();
-    for(unsigned long int i=0;i<N;++i){
-      theta0.row(i) = sample_theta_i_arms(theta0.row(i).t(), response.row(i).t(), inv_sigma0, A0, d0).t();
-    }
-    if(theta0.has_nan()){
-      Rcpp::stop("nan in theta0\n");
-    }
-  
-    if(arrive_flag){
-      arma::mat M = theta0 * A0.t();
-      M.each_row() += d0.t();
-      M = 1.0 / (1.0 + arma::exp(-M));
-      A_deriv = (response - M).t() * theta0; 
-      A_deriv = A_deriv % Q;
-      d_deriv = arma::sum(response - M, 0).t();
-      
-      double mcn_count = mcn - mcn0 + 1.0;
-      double factor = std::pow(mcn_count, -alpha);
-      A0 += step_a * factor * A_deriv;
-      d0 += step_d * factor * d_deriv;
-      B0 = update_sigma_one_step1(theta0, B0, step_B * factor);
-      //sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-5);
-      sigma0 = B0.t() * B0; 
-      inv_sigma0 = arma::inv_sympd(sigma0);
-      
-      
-      double portion_old = mcn_count / (mcn_count + 1.0);
-      double portion_new = 1.0 / (mcn_count + 1.0);
-      A_hat = portion_old * A_hat + portion_new * A0;
-      d_hat = portion_old * d_hat + portion_new * d0;
-      B_hat = arma::normalise(portion_old * B_hat + portion_new * B0);
-      
-      // calculate missing information
-      s = s_func(theta0, response, Q, sigma0, A0, d0);
-      res1 += factor * (h_func(theta0, response, Q, sigma0, A0, d0) - s * s.t() - res1);
-      res2 += factor * (s - res2);
-      mis_info1 = portion_old * mis_info1 + portion_new * res1;
-      mis_info2 = portion_old * mis_info2 + portion_new * res2;
-      
-      // if(mcn > 500){
-      //   
-      //   double mcn_count00 = mcn - 500;
-      //   double factor00 = std::pow(mcn_count00, -alpha);
-      //   double portion_old00 = mcn_count00 / (mcn_count00 + 1.0);
-      //   double portion_new00 = 1.0 / (mcn_count00 + 1.0);
-      //   
-      //   s = s_func(theta0, response, Q, sigma0, A0, d0);
-      //   res1 += factor00 * (h_func(theta0, response, Q, sigma0, A0, d0) - s * s.t() - res1);
-      //   res2 += factor00 * (s - res2);
-      //   
-      //   mis_info1 = portion_old00 * mis_info1 + portion_new00 * res1;
-      //   mis_info2 = portion_old00 * mis_info2 + portion_new00 * res2;
-      // }
-      
-    }
-    // else{
-    //   if(K > 1){
-    //     sigma0 = calcu_sigma_cmle_cpp(theta0, 1e-5);
-    //     if(!sigma0.is_sympd()){
-    //       Rcpp::stop("error after calcu_sigma\n");
-    //     }
-    //     inv_sigma0 = arma::inv_sympd(sigma0);
-    //   }
-    //   for(unsigned int j=0;j<J;++j){
-    //     rv(0) = j;
-    //     cv = arma::find(Q.row(j));
-    //     arma::vec glm_res = my_Logistic_cpp(theta0.cols(cv), response.col(j), A0.submat(rv, cv).t(), d0(j));
-    //     A0.submat(rv, cv) = glm_res.subvec(0, cv.n_rows-1).t();
-    //     d0(j) = glm_res(cv.n_rows);
-    //   }
-    //     
-    //   A_hat = A0;
-    //   d_hat = d0;
-    //   sigma_hat = sigma0;
-    //   log_lik(mcn) = log_full_likelihood(response, A0, d0, theta0, inv_sigma0);
-    //   if(!(mcn%block_size) && mcn>=(window_size-1)){
-    //     double m1 = arma::mean(log_lik.subvec(mcn-window_size+1, mcn-window_size+(int)(0.1*window_size)));
-    //     double m2 = arma::mean(log_lik.subvec(mcn-(int)(0.5*window_size), mcn-1));
-    //     if(std::abs(m1-m2) < tol){
-    //       arrive_flag = true;
-    //       mcn0 = mcn;
-    //       max_steps = std::min(max_steps, (int)(mcn+window_size));
-    //       if(print_proc) Rcpp::Rcout << "sa burn in finish at " << mcn << std::endl;
-    //     }
-    //     else{
-    //       if(print_proc) Rcpp::Rcout << "log likelihood mean diff: " << std::abs(m1-m2) << std::endl;
-    //     }
-    //   }
-    //   // log_lik(mcn) = log_full_likelihood(response, A0, d0, theta0, inv_sigma0);
-    //   // if(!(mcn%block_size) && mcn>=(window_size-1) && !flag){
-    //   //   //Rprintf("mcn = %d | ", mcn);
-    //   //   // double m1 = arma::mean(log_lik.subvec(mcn-window_size, mcn-window_size+(int)(0.1*window_size)));
-    //   //   // double m2 = arma::mean(log_lik.subvec(mcn-(int)(0.5*window_size), mcn-1));
-    //   //   arma::uvec col_ind = arma::regspace<arma::uvec>(mcn-window_size, mcn-1);
-    //   //   
-    //   //   arma::mat A_hat_all_tmp = arma::diff(A_hat_all.submat(A_free_ind,col_ind), 1,1);
-    //   //   arma::vec A_hat_tmp_std = arma::mean(A_hat_all_tmp, 1) / arma::stddev(A_hat_all_tmp, 1, 1);
-    //   //   double m1 = arma::max(arma::abs(A_hat_tmp_std));
-    //   //   
-    //   //   arma::mat d_hat_tmp = arma::diff(d_hat_all.cols(mcn - window_size, mcn-1),1,1);
-    //   //   arma::vec d_deriv_tmp_std = arma::mean(d_hat_tmp,1) / arma::stddev(d_hat_tmp,1,1);
-    //   //   double m2 = arma::max(arma::abs(d_deriv_tmp_std));
-    //   //   // if(std::abs(m1-m2) < tol){
-    //   //   if(m1 < tol_a && m2 < tol_d){
-    //   //     flag = true;
-    //   //     mcn0 = mcn;
-    //   //     Rcpp::Rcout << "arrive at " << mcn <<"\n";
-    //   //     max_steps = std::min(max_steps, (int)(mcn + window_size));
-    //   //   }
-    //   //   else{
-    //   //     if(print_proc) Rcpp::Rcout << "converge criterion: " <<" m1: "<< m1 << " m2: " << m2 << std::endl;
-    //   //   }
-    //   // }// end of if(!mcn)
-    // }// end of if(arrive_flag)
-    A_hat_all.col(mcn) = arma::vectorise(A_hat);
-    d_hat_all.col(mcn) = d_hat;
-    B_hat_all.col(mcn) = arma::vectorise(B_hat);
-    A_deriv_all.col(mcn) = arma::vectorise(A_deriv);
-    d_deriv_all.col(mcn) = d_deriv;
+    // A_all.col(mcn-1) = arma::vectorise(A);
+    // d_all.col(mcn-1) = d;
+    // B_all.col(mcn-1) = arma::vectorise(B);
+    // A_hat_all.col(mcn-1) = arma::vectorise(A_hat);
+    // d_hat_all.col(mcn-1) = d_hat;
+    // B_hat_all.col(mcn-1) = arma::vectorise(B_hat);
     
-    check_info1(mcn) = mis_info1(0,0);
-    check_info2(mcn) = mis_info2(0);
   }// end of mcn for loop
 
   return Rcpp::List::create(Rcpp::Named("A_hat") = A_hat,
                             Rcpp::Named("d_hat") = d_hat,
                             Rcpp::Named("sigma_hat") = B_hat.t() * B_hat,
-                            Rcpp::Named("A_hat_all") = A_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("d_hat_all") = d_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("A_deriv_all") = A_deriv_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("d_deriv_all") = d_deriv_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("B_hat_all") = B_hat_all.cols(0, max_steps-1).t(),
-                            Rcpp::Named("check_info1") = check_info1.subvec(0, max_steps-1),
-                            Rcpp::Named("check_info2") = check_info2.subvec(0, max_steps-1),
-                            Rcpp::Named("theta0") = theta0,
-                            Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t());
+                            // Rcpp::Named("A_hat_all") = A_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_hat_all") = d_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_hat_all") = B_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("A_all") = A_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_all") = d_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_all") = B_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
+                            Rcpp::Named("theta") = theta);
+
+}
+//' @export
+// [[Rcpp::export]]
+Rcpp::List sa_mirt_conf_no_ave(const arma::mat &response, 
+                        arma::mat A, const arma::mat &Q, arma::vec d,
+                        arma::mat B, arma::mat theta,
+                        double alpha, double step = 1.0, int max_steps = 200){
+  long int N = response.n_rows;
+  long int J = response.n_cols;
+  long int K = A.n_cols;
+  
+  arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
+  
+  arma::mat A_res1 = arma::zeros(J,K);
+  arma::mat A_res2 = arma::zeros(J,K);
+  arma::mat A_mis_info = arma::zeros(J,K);
+  arma::vec d_res1 = arma::zeros(J);
+  arma::vec d_res2 = arma::zeros(J);
+  arma::vec d_mis_info = arma::zeros(J);
+  arma::mat B_res1 = arma::zeros(K,K);
+  arma::mat B_res2 = arma::zeros(K,K);
+  arma::mat B_mis_info = arma::zeros(K,K);
+  // arma::vec log_lik = arma::zeros(max_steps);
+  
+  // int param_num = arma::accu(Q) + J + K*(K-1)/2;
+  // arma::vec s;
+  // arma::vec res2 = arma::zeros(param_num);
+  // arma::mat res1 = arma::zeros(param_num, param_num);
+  // arma::vec mis_info2 = arma::zeros(param_num);
+  // arma::mat mis_info1 = arma::zeros(param_num, param_num);
+  int mcn = 1;
+  for(mcn=1; mcn < max_steps; mcn++){
+    Rcpp::checkUserInterrupt();
+    // sampling process
+    for(int i=0;i<N;++i){
+      theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
+    }
+    if(theta.has_nan()){
+      Rcpp::stop("nan in theta0\n");
+    }
+    
+    // calculate missing information
+    // s = s_func(theta, response, Q, inv_sigma, A, d);
+    // res1 += factor * (h_func(theta, response, Q, inv_sigma, A, d) - s * s.t() - res1);
+    // res2 += factor * (s - res2);
+    // mis_info1 = mis_info1 * mcn / (mcn+1.0) + res1 / (mcn+1.0);
+    // mis_info2 = mis_info2 * mcn / (mcn+1.0) + res2 / (mcn+1.0);
+    
+    // Robbin-Monro update
+    RM_update_conf(response, theta, A, A_res1, A_res2, A_mis_info, Q,
+                   d, d_res1, d_res2, d_mis_info,
+                   B, B_res1, B_res2, B_mis_info,
+                   mcn, alpha, step, 1e-3, 1000);
+    inv_sigma = arma::inv_sympd(B.t() * B);
+    
+  }// end of mcn for loop
+  
+  return Rcpp::List::create(Rcpp::Named("A_hat") = A,
+                            Rcpp::Named("d_hat") = d,
+                            Rcpp::Named("sigma_hat") = B.t() * B,
+                            // Rcpp::Named("A_hat_all") = A_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_hat_all") = d_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_hat_all") = B_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("A_all") = A_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_all") = d_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_all") = B_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
+                            Rcpp::Named("theta") = theta);
   
 }
 //' @export
 // [[Rcpp::export]]
-arma::mat test(arma::mat A, double c){
-  return arma::max(A, c * arma::ones(arma::size(A)));
+Rcpp::List MHRM_conf(const arma::mat &response, 
+                        arma::mat A, const arma::mat &Q, arma::vec d,
+                        arma::mat B, arma::mat theta, double step = 1.0,
+                        int max_steps = 200){
+  long int N = response.n_rows;
+  long int J = response.n_cols;
+  long int K = A.n_cols;
+  
+  arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
+  
+  // arma::mat A_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_all = arma::zeros(J, max_steps);
+  // arma::mat B_all = arma::zeros(K*K, max_steps);
+  
+  arma::mat A_res1 = arma::zeros(J,K);
+  arma::mat A_res2 = arma::zeros(J,K);
+  arma::mat A_mis_info = arma::zeros(J,K);
+  arma::vec d_res1 = arma::zeros(J);
+  arma::vec d_res2 = arma::zeros(J);
+  arma::vec d_mis_info = arma::zeros(J);
+  arma::mat B_res1 = arma::zeros(K,K);
+  arma::mat B_res2 = arma::zeros(K,K);
+  arma::mat B_mis_info = arma::zeros(K,K);
+  // arma::vec log_lik = arma::zeros(max_steps);
+  
+  // int param_num = J*K + J + K*(K-1)/2;
+  // arma::vec s;
+  // arma::vec res2 = arma::zeros(param_num);
+  // arma::mat res1 = arma::zeros(param_num, param_num);
+  // arma::vec mis_info2 = arma::zeros(param_num);
+  // arma::mat mis_info1 = arma::zeros(param_num, param_num);
+  // double epsA, epsd, epsB;
+  // double eps = 1.0;
+  int mcn = 1;
+  for(mcn=1; mcn < max_steps; mcn++){
+    Rcpp::checkUserInterrupt();
+    // sampling process
+    for(unsigned long int i=0;i<N;++i){
+      theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
+    }
+    if(theta.has_nan()){
+      Rcpp::stop("nan in theta0\n");
+    }
+    
+    // calculate missing information
+    // double step_n = std::pow(mcn, -1);
+    // s = s_func(theta, response, arma::ones(J,K), inv_sigma, A, d);
+    // res1 += step_n * (h_func(theta, response, arma::ones(J,K), inv_sigma, A, d) - s * s.t() - res1);
+    // res2 += step_n * (s - res2);
+    // mis_info1 = mis_info1 * (mcn-1.0) / mcn + res1 / mcn;
+    // mis_info2 = mis_info2 * (mcn-1.0) / mcn + res2 / mcn;
+    // 
+    // arma::vec tmp = arma::diagvec(arma::inv_sympd(mis_info1 + mis_info2*mis_info2.t()));
+    // Rcpp::Rcout << tmp.n_rows <<std::endl;
+    // arma::mat tmpsub = tmp.head(J*K);
+    // tmpsub.reshape(J,K);
+    // Rcpp::Rcout << tmpsub.n_rows << std::endl;
+    // Rcpp::Rcout << arma::size(tmpsub);
+    // A_scale_hat = tmpsub;
+    // d_scale_hat = tmp.subvec(J*K, J*K+J-1);
+    // // Robbin-Monro update
+    // MHRM_update(response, theta, A, A_scale_hat, Q, d, d_scale_hat,
+    //                B, mcn, 1, 1e-3);
+    RM_update_conf(response, theta, A, A_res1, A_res2, A_mis_info, Q,
+                   d, d_res1, d_res2, d_mis_info,
+                   B, B_res1, B_res2, B_mis_info,
+                   mcn, 1, step, 1e-3, 1000);
+    inv_sigma = arma::inv_sympd(B.t() * B);
+    
+    // Ruppert-averaging
+    // epsA = arma::abs(A_hat-A).max()/(mcn+1.0);
+    // epsd = arma::abs(d_hat-d).max()/(mcn+1.0);
+    // epsB = arma::abs(B_hat-B).max()/(mcn+1.0);
+    // eps = std::max({epsA,epsd,epsB});
+    // Rcpp::Rcout << "iter: " << mcn << " eps: " << eps << std::endl;
+    // Rcpp::Rcout << "\r iter: " << mcn;
+    
+    // A_all.col(mcn-1) = arma::vectorise(A);
+    // d_all.col(mcn-1) = d;
+    // B_all.col(mcn-1) = arma::vectorise(B);
+    
+  }// end of mcn for loop
+  
+  return Rcpp::List::create(Rcpp::Named("A") = A,
+                            Rcpp::Named("d") = d,
+                            Rcpp::Named("sigma") = B.t() * B,
+                            // Rcpp::Named("A_all") = A_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_all") = d_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_all") = B_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
+                            Rcpp::Named("theta") = theta);
+  
+}
+// use only first order information
+void RM_update_conf1(const arma::mat &response, const arma::mat &theta, 
+                    arma::mat &A, const arma::mat &Q, 
+                    arma::vec &d,
+                    arma::mat &B,
+                    int mcn, double alpha, double step){
+  int N = response.n_rows;
+  int J = response.n_cols;
+  int K = A.n_cols;
+  
+  double step_n = step * std::pow(mcn, -alpha);
+  
+  arma::mat M = theta * A.t();
+  M.each_row() += d.t();
+  M = 1.0 / (1.0 + arma::exp(-M));
+  
+  // update A
+  arma::mat A_deriv = (response - M).t() * theta / N; 
+  A_deriv %= Q;
+  A += step_n * A_deriv;
+  
+  // update d
+  arma::vec d_deriv = arma::sum(response - M, 0).t() / N;
+  d += step_n * d_deriv;
+  B = update_sigma_one_step3(theta, B, step_n);
+}
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::List sa_mirt_conf1(const arma::mat &response, 
+                        arma::mat A, const arma::mat &Q, arma::vec d,
+                        arma::mat B, arma::mat theta,
+                        double alpha, double step = 1.0,
+                        int ave_from = 100, int max_steps = 200){
+  long int N = response.n_rows;
+  long int J = response.n_cols;
+  long int K = A.n_cols;
+  
+  arma::mat inv_sigma = arma::inv_sympd(B.t() * B);
+  
+  arma::mat A_hat = A;
+  arma::vec d_hat = d;
+  arma::mat B_hat = B;
+  // arma::mat A_hat_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_hat_all = arma::zeros(J, max_steps);
+  // arma::mat B_hat_all = arma::zeros(K*K, max_steps);
+  // arma::mat A_all = arma::zeros(J*K, max_steps);
+  // arma::mat d_all = arma::zeros(J, max_steps);
+  // arma::mat B_all = arma::zeros(K*K, max_steps);
+  
+  // arma::vec log_lik = arma::zeros(max_steps);
+  
+  // int param_num = arma::accu(Q) + J + K*(K-1)/2;
+  // arma::vec s;
+  // arma::vec res2 = arma::zeros(param_num);
+  // arma::mat res1 = arma::zeros(param_num, param_num);
+  // arma::vec mis_info2 = arma::zeros(param_num);
+  // arma::mat mis_info1 = arma::zeros(param_num, param_num);
+  int mcn = 1;
+  for(mcn=1; mcn < max_steps; mcn++){
+    Rcpp::checkUserInterrupt();
+    // sampling process
+    for(int i=0;i<N;++i){
+      theta.row(i) = sample_theta_i_arms(theta.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
+    }
+    if(theta.has_nan()){
+      Rcpp::stop("nan in theta0\n");
+    }
+    
+    // calculate missing information
+    // s = s_func(theta, response, Q, inv_sigma, A, d);
+    // res1 += factor * (h_func(theta, response, Q, inv_sigma, A, d) - s * s.t() - res1);
+    // res2 += factor * (s - res2);
+    // mis_info1 = mis_info1 * mcn / (mcn+1.0) + res1 / (mcn+1.0);
+    // mis_info2 = mis_info2 * mcn / (mcn+1.0) + res2 / (mcn+1.0);
+    
+    // Robbin-Monro update
+    RM_update_conf1(response, theta, A, Q,
+                   d, B, mcn, alpha, step);
+    inv_sigma = arma::inv_sympd(B.t() * B);
+    
+    // Ruppert-averaging
+    // epsA = arma::abs(A_hat-A).max()/(mcn+1.0);
+    // epsd = arma::abs(d_hat-d).max()/(mcn+1.0);
+    // epsB = arma::abs(B_hat-B).max()/(mcn+1.0);
+    // eps = std::max({epsA,epsd,epsB});
+    // Rcpp::Rcout << "\r iter: " << mcn << " eps: " << eps;
+    if(mcn<ave_from){
+      A_hat = A;
+      d_hat = d;
+      B_hat = B;
+    }
+    else{
+      double mcn0 = mcn - ave_from;
+      A_hat = A_hat * mcn0 / (mcn0+1.0) + A / (mcn0+1.0);
+      d_hat = d_hat * mcn0 / (mcn0+1.0) + d / (mcn0+1.0);
+      B_hat = arma::normalise(B_hat * mcn0 / (mcn0+1.0) + B / (mcn0+1.0));
+    }
+    
+    // A_all.col(mcn-1) = arma::vectorise(A);
+    // d_all.col(mcn-1) = d;
+    // B_all.col(mcn-1) = arma::vectorise(B);
+    // A_hat_all.col(mcn-1) = arma::vectorise(A_hat);
+    // d_hat_all.col(mcn-1) = d_hat;
+    // B_hat_all.col(mcn-1) = arma::vectorise(B_hat);
+    
+  }// end of mcn for loop
+  
+  return Rcpp::List::create(Rcpp::Named("A_hat") = A_hat,
+                            Rcpp::Named("d_hat") = d_hat,
+                            Rcpp::Named("sigma_hat") = B_hat.t() * B_hat,
+                            // Rcpp::Named("A_hat_all") = A_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_hat_all") = d_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_hat_all") = B_hat_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("A_all") = A_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("d_all") = d_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("B_all") = B_all.cols(0, mcn-2).t(),
+                            // Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
+                            Rcpp::Named("theta") = theta);
+  
 }
 //' @export
 // [[Rcpp::export]]

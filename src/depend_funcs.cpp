@@ -15,6 +15,8 @@ double my_rand_unif(){
   
   return dist(mt);
 }
+//' @export
+//[[Rcpp::export]]
 double obj_func_cpp(arma::mat sigma, arma::mat sigma_hat){
   arma::mat sigma_inv;
   if(sigma.is_sympd()){
@@ -25,16 +27,18 @@ double obj_func_cpp(arma::mat sigma, arma::mat sigma_hat){
   }
   return arma::accu( sigma_inv % sigma_hat ) + std::log(arma::det(sigma));
 }
+//' @export
+// [[Rcpp::export]]
 arma::mat calcu_sigma_cmle_cpp(const arma::mat &theta, double tol){
-  long int N = theta.n_rows;
+  int N = theta.n_rows;
   arma::mat sigma_hat = theta.t() * theta / (double)N;
   arma::mat sigma0 = arma::cor(theta);
   arma::mat sigma1 = sigma0;
   arma::mat tmp = sigma0;
   double eps = 1;
-  double step = 1;
-  while(eps > tol){
-    step = 1;
+  double step = 0.1;
+  while(eps < 0 || eps > tol){
+    step = 0.1;
     if(!sigma0.is_sympd()){
       Rcpp::Rcout << sigma0 << "\n step=" << step <<std::endl;
       Rcpp::Rcout << "size of theta" << arma::size(theta) <<std::endl;
@@ -46,18 +50,20 @@ arma::mat calcu_sigma_cmle_cpp(const arma::mat &theta, double tol){
     sigma1.diag().ones();
 
     // -1e-7 here for preventing -0.0 fall into the while loop
+    eps = obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat);
     while(!sigma1.is_sympd() || 
-          (obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat) < -1e-7) ||
+          eps < -1e-7 ||
           min(arma::eig_sym(sigma1)) < 1e-5){
       step *= 0.5;
-      if(step < 1e-5){
-        Rprintf("Possible error in sigma estimation\n");
-        break;
+      if(step < 1e-7){
+        Rcpp::stop("Possible error in sigma estimation\n");
+        // return sigma0;
+        // return sigma0;
       }
       sigma1 = sigma0 - step * sigma_deriv;
       sigma1.diag().ones();
+      eps = obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat);
     }
-    eps = obj_func_cpp(sigma0, sigma_hat) - obj_func_cpp(sigma1, sigma_hat);
     sigma0 = sigma1;
   }
   return sigma0;
@@ -248,18 +254,17 @@ arma::mat update_sigma_one_step(const arma::mat &theta0, double step_sigma){
   }
   return sigma1;
 }
-
-//' @export
-// [[Rcpp::export]]
 arma::mat update_sigma_one_step1(const arma::mat &theta0,
-                                 const arma::mat &B0, double step_B){
-  
+                                 const arma::mat &B0,
+                                 double step_B){
   arma::mat B_inv = arma::inv(B0.t());
-  arma::mat B_deriv = (B_inv * theta0.t() * theta0 * B_inv.t() * B_inv) - theta0.n_rows * B_inv ;
+  arma::mat B_deriv = (B_inv * theta0.t() * theta0 * B_inv.t() * B_inv) - theta0.n_rows * B_inv;
   B_deriv(0,0) = 0;
   B_deriv = arma::trimatu(B_deriv);
   // return B_deriv;
   // one step and proximal operation
+  // arma::mat B1 = arma::normalise(B0 + step_B * B_deriv);
+  // Rcpp::Rcout << B_scale[2] << std::endl;
   arma::mat B1 = arma::normalise(B0 + step_B * B_deriv);
   if(!(B1.t()*B1).is_sympd()){
     Rcpp::Rcout << "B0" << B0;
@@ -270,13 +275,153 @@ arma::mat update_sigma_one_step1(const arma::mat &theta0,
   }
   return B1;
 }
-  
-arma::vec s_func(arma::mat theta, arma::mat response, arma::mat Q, arma::mat Sigma, arma::mat A, arma::vec d){
-  int K = Sigma.n_cols;
-  //  int J = A.n_rows;
+double lambda_func(double lambda, const arma::vec& bk, const arma::vec& dk){
+  int K = bk.n_rows;
+  return arma::norm(bk / (arma::ones(K) + lambda * dk),2)-1;
+}
+arma::mat lagrange_opt(arma::mat B1, arma::mat B_scale){
+  int K = B1.n_rows;
+  for(int k=1;k<K;++k){
+    arma::vec bk = B1.col(k);
+    arma::vec dk = B_scale.col(k);
+    double lambda1 = -0.5/dk(k);
+    double lambda2 = 1.0/dk(k);
+    for(int i=0;i<100;++i){
+      if(lambda_func(lambda1, bk,dk)>0) break;
+      lambda1 -= 0.1/dk(k);
+    }
+    for(int i=0;i<100;++i){
+      if(lambda_func(lambda2, bk,dk)<0) break;
+      lambda2 += 1.0/dk(k);
+    }
+    if(lambda_func(lambda1, bk,dk)<0 || lambda_func(lambda2, bk,dk)>0){
+      Rcpp::Rcout << std::endl << "lambda1=" << lambda_func(lambda1, bk,dk) << " lambda2= "<<lambda_func(lambda2, bk,dk)<< bk;
+      Rcpp::stop("lambda range error\n");
+    }
+    double eps = lambda_func((lambda1+lambda2)/2, bk,dk);
+    while(eps < -1e-5 || eps > 1e-5){
+      if(eps>1e-5){
+        lambda1 = (lambda1+lambda2)/2;
+      }
+      else{
+        lambda2 = (lambda1+lambda2)/2;
+      }
+      eps = lambda_func((lambda1+lambda2)/2, bk,dk);
+    }
+    B1.col(k) = bk / (arma::ones(K) + (lambda1+lambda2)/2 * dk);
+  }
+  return B1;
+}
+
+//' @export
+// [[Rcpp::export]]
+arma::mat update_sigma_one_step2(const arma::mat &theta0,
+                                 const arma::mat &B0, arma::mat& B_res1, arma::mat& B_res2,
+                                 arma::mat & B_mis_info,
+                                 int mcn, double alpha, double step, double c1, double c2){
+  double step_B = step * std::pow(mcn, -alpha);
+  int N = theta0.n_rows;
+  int K = B0.n_rows;
+  arma::mat B_inv = arma::inv(B0.t());
+  arma::mat B_deriv = ((B_inv * theta0.t() * theta0 * B_inv.t() * B_inv) - theta0.n_rows * B_inv)/N;
+  arma::mat B_deriv2 = arma::zeros(K,K);
+  for(int j=1;j<K;++j){
+    for(int i=0;i<=j;++i){
+      arma::mat B01 = B0;
+      B01(i,j) += 1e-7;
+      arma::mat B_inv1 = arma::inv(B01.t());
+      arma::mat B_deriv1 = ((B_inv1 * theta0.t() * theta0 * B_inv1.t() * B_inv1) - theta0.n_rows * B_inv1)/N;
+      B_deriv2(i,j) = -(B_deriv1(i,j) - B_deriv(i,j))/1e-7;
+    }
+  }
+
+  B_res1 += step_B * (B_deriv - B_res1);
+  B_res2 += step_B * (B_deriv2 - arma::square(B_deriv) - B_res2);
+  B_mis_info = B_mis_info * (mcn-1.0)/mcn + 
+    arma::min(arma::max(B_res2 + arma::square(B_res1), c1 * arma::ones(K,K)),c2*arma::ones(K,K))/mcn;
+  arma::mat B_scale = 1.0 / B_mis_info;
+  // Rcpp::Rcout << B_deriv2 <<std::endl;
+  // arma::mat B_scale = arma::min(arma::max(1.0/B_mis_info,1e-3*arma::ones(K,K)),1000*arma::ones(K,K));
+  // Rcpp::Rcout << B_scale<<std::endl;
+  B_deriv(0,0) = 0;
+  B_deriv = arma::trimatu(B_deriv);
+  // return B_deriv;
+  // one step and proximal operation
+  // arma::mat B1 = arma::normalise(B0 + step_B * B_deriv);
+  // Rcpp::Rcout << B_scale[2] << std::endl;
+  arma::mat B1 = lagrange_opt(B0 + step_B * (B_deriv % B_scale), B_scale);
+  // arma::mat B1 = arma::normalise(B0 + step_B * (B_deriv % B_scale));
+  if(!(B1.t()*B1).is_sympd()){
+    Rcpp::Rcout << "B0" << B0;
+    Rcpp::Rcout << "step" << step_B;
+    Rcpp::Rcout << "B_deriv" << B_deriv / theta0.n_rows;
+    Rcpp::Rcout << "B=" << B1;
+    Rcpp::stop("B not sympd\n");
+  }
+  return B1;
+}
+// use only first order information and Lagrangian
+arma::mat update_sigma_one_step3(const arma::mat &theta0,
+                                 const arma::mat &B0,
+                                 double step_B){
+  int N = theta0.n_rows;
+  int K = B0.n_rows;
+  arma::mat B_inv = arma::inv(B0.t());
+  arma::mat B_deriv = ((B_inv * theta0.t() * theta0 * B_inv.t() * B_inv) - theta0.n_rows * B_inv)/N;
+  B_deriv(0,0) = 0;
+  B_deriv = arma::trimatu(B_deriv);
+  arma::mat B1 = lagrange_opt(B0 + step_B * B_deriv, arma::ones(K,K));
+  // arma::mat B1 = arma::normalise(B0 + step_B * (B_deriv % B_scale));
+  if(!(B1.t()*B1).is_sympd()){
+    Rcpp::Rcout << "B0" << B0;
+    Rcpp::Rcout << "step" << step_B;
+    Rcpp::Rcout << "B_deriv" << B_deriv / theta0.n_rows;
+    Rcpp::Rcout << "B=" << B1;
+    Rcpp::stop("B not sympd\n");
+  }
+  return B1;
+}
+//' @export
+// [[Rcpp::export]]
+arma::mat calcu_sigma_cmle_cpp1(const arma::mat &theta){
+  int N = theta.n_rows;
+  int K = theta.n_cols;
+  arma::mat sigma_hat = theta.t() * theta / (double)N;
+  arma::mat sigma0 = arma::cor(theta);
+  arma::mat B0 = arma::chol(sigma0);
+  arma::mat B_scale = arma::ones(K,K);
+  arma::mat B1 = B0;
+  arma::mat B_inv = arma::inv(B0.t());
+  arma::mat B_deriv = ((B_inv * theta.t() * theta * B_inv.t() * B_inv) - theta.n_rows * B_inv)/N;
+  for(int j=1;j<K;++j){
+    for(int i=0;i<=j;++i){
+      arma::mat B01 = B0;
+      B01(i,j) += 1e-7;
+      arma::mat B_inv1 = arma::inv(B01.t());
+      arma::mat B_deriv1 = ((B_inv1 * theta.t() * theta * B_inv1.t() * B_inv1) - theta.n_rows * B_inv1)/N;
+      B_scale(i,j) = 1e-7 / (B_deriv(i,j) - B_deriv1(i,j));
+    }
+  }
+  B_deriv(0,0) = 0;
+  B_deriv = arma::trimatu(B_deriv);
+  B1 = lagrange_opt(B0 + 1.0 * (B_deriv % B_scale), B_scale);
+    // eps = obj_func_cpp(B0.t() * B0, sigma_hat) - obj_func_cpp(B1.t() * B1, sigma_hat);
+    // if(eps < 0){
+    //   Rcpp::stop("stem update sigma error\n");
+    // }
+  return B1;
+}
+//' @export
+// [[Rcpp::export]]
+arma::mat test_deriv(arma::mat B0, arma::mat theta0){
+  arma::mat B_inv = arma::inv(B0.t());
+  arma::mat B_deriv = (B_inv * theta0.t() * theta0 * B_inv.t() * B_inv) - theta0.n_rows * B_inv ;
+  return B_deriv;
+}
+arma::vec s_func(arma::mat theta, arma::mat response, arma::mat Q, arma::mat Sigma_inv, arma::mat A, arma::vec d){
+  int K = Sigma_inv.n_cols;
   int N = theta.n_rows;
   arma::uvec Q_ind = arma::find(arma::vectorise(Q.t())>0);
-  arma::mat Sigma_inv = arma::inv_sympd(Sigma);
   arma::vec res1 = arma::zeros(K*(K-1)/2);
   int kk = 0;
   for(int i=0;i<(K-1);++i){
@@ -292,12 +437,11 @@ arma::vec s_func(arma::mat theta, arma::mat response, arma::mat Q, arma::mat Sig
   return arma::join_cols(arma::join_cols(res1,res2.elem(Q_ind)),res3);
 }
 
-arma::mat h_func(arma::mat theta, arma::mat response, arma::mat Q, arma::mat Sigma, arma::mat A, arma::vec d){
-  int K = Sigma.n_cols;
+arma::mat h_func(arma::mat theta, arma::mat response, arma::mat Q, arma::mat Sigma_inv, arma::mat A, arma::vec d){
+  int K = Sigma_inv.n_cols;
   int J = A.n_rows;
   int N = theta.n_rows;
   arma::uvec Q_ind = arma::find(arma::vectorise(Q.t())>0);
-  arma::mat Sigma_inv = arma::inv_sympd(Sigma);
   arma::mat res = arma::zeros(K*(K-1)/2+Q_ind.n_elem+J,K*(K-1)/2+Q_ind.n_elem+J);
   arma::mat res1 = arma::zeros(K*(K-1)/2,K*(K-1)/2);
   int kk1 = 0;

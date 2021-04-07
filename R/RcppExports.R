@@ -7,13 +7,33 @@ my_rand_unif <- function() {
 }
 
 #' @export
+obj_func_cpp <- function(sigma, sigma_hat) {
+    .Call('_lvmcomp_obj_func_cpp', PACKAGE = 'lvmcomp', sigma, sigma_hat)
+}
+
+#' @export
+calcu_sigma_cmle_cpp <- function(theta, tol) {
+    .Call('_lvmcomp_calcu_sigma_cmle_cpp', PACKAGE = 'lvmcomp', theta, tol)
+}
+
+#' @export
 log_sum_exp2 <- function(tmp) {
     .Call('_lvmcomp_log_sum_exp2', PACKAGE = 'lvmcomp', tmp)
 }
 
 #' @export
-update_sigma_one_step1 <- function(theta0, B0, step_B) {
-    .Call('_lvmcomp_update_sigma_one_step1', PACKAGE = 'lvmcomp', theta0, B0, step_B)
+update_sigma_one_step2 <- function(theta0, B0, B_res1, B_res2, B_mis_info, mcn, alpha, step, c1, c2) {
+    .Call('_lvmcomp_update_sigma_one_step2', PACKAGE = 'lvmcomp', theta0, B0, B_res1, B_res2, B_mis_info, mcn, alpha, step, c1, c2)
+}
+
+#' @export
+calcu_sigma_cmle_cpp1 <- function(theta) {
+    .Call('_lvmcomp_calcu_sigma_cmle_cpp1', PACKAGE = 'lvmcomp', theta)
+}
+
+#' @export
+test_deriv <- function(B0, theta0) {
+    .Call('_lvmcomp_test_deriv', PACKAGE = 'lvmcomp', B0, theta0)
 }
 
 #' @export
@@ -57,8 +77,8 @@ stem_pcirtc <- function(response, Q, A0, D0, theta0, sigma0, T, parallel) {
 }
 
 #' @export
-stem_simu <- function(response, Q, A0, d0, sigma0, theta0, tol, window_size = 40L, block_size = 20L, max_steps = 2000L, print_proc = TRUE) {
-    .Call('_lvmcomp_stem_simu', PACKAGE = 'lvmcomp', response, Q, A0, d0, sigma0, theta0, tol, window_size, block_size, max_steps, print_proc)
+stem_simu <- function(response, Q, A0, d0, B0, theta0, ave_from = 100L, max_steps = 200L, print_proc = TRUE) {
+    .Call('_lvmcomp_stem_simu', PACKAGE = 'lvmcomp', response, Q, A0, d0, B0, theta0, ave_from, max_steps, print_proc)
 }
 
 #' @export
@@ -67,23 +87,28 @@ sa_penmirt <- function(response, theta, A, d, B, lambda, zero, anchor, alpha, st
 }
 
 #' @export
-sa_penmirt1 <- function(response, theta, A, d, B, lambda, zero, anchor, alpha, step = 1, max_steps = 200L, scale_bound = 1) {
-    .Call('_lvmcomp_sa_penmirt1', PACKAGE = 'lvmcomp', response, theta, A, d, B, lambda, zero, anchor, alpha, step, max_steps, scale_bound)
+sa_penmirt1 <- function(response, theta, A, d, B, lambda, zero, anchor, alpha, step = 1, ave_from = 50L, max_steps = 200L, tol = 0.01) {
+    .Call('_lvmcomp_sa_penmirt1', PACKAGE = 'lvmcomp', response, theta, A, d, B, lambda, zero, anchor, alpha, step, ave_from, max_steps, tol)
 }
 
 #' @export
-sa_penmirt2 <- function(response, theta, A, d, B, lambda, zero, anchor, alpha, step = 1, max_steps = 200L) {
-    .Call('_lvmcomp_sa_penmirt2', PACKAGE = 'lvmcomp', response, theta, A, d, B, lambda, zero, anchor, alpha, step, max_steps)
+sa_mirt_conf <- function(response, A, Q, d, B, theta, alpha, step = 1.0, ave_from = 100L, max_steps = 200L) {
+    .Call('_lvmcomp_sa_mirt_conf', PACKAGE = 'lvmcomp', response, A, Q, d, B, theta, alpha, step, ave_from, max_steps)
 }
 
 #' @export
-sa_mirt_conf <- function(response, Q, A0, d0, sigma0, theta0, alpha, tol, window_size = 40L, block_size = 20L, max_steps = 2000L, print_proc = TRUE) {
-    .Call('_lvmcomp_sa_mirt_conf', PACKAGE = 'lvmcomp', response, Q, A0, d0, sigma0, theta0, alpha, tol, window_size, block_size, max_steps, print_proc)
+sa_mirt_conf_no_ave <- function(response, A, Q, d, B, theta, alpha, step = 1.0, max_steps = 200L) {
+    .Call('_lvmcomp_sa_mirt_conf_no_ave', PACKAGE = 'lvmcomp', response, A, Q, d, B, theta, alpha, step, max_steps)
 }
 
 #' @export
-test <- function(A, c) {
-    .Call('_lvmcomp_test', PACKAGE = 'lvmcomp', A, c)
+MHRM_conf <- function(response, A, Q, d, B, theta, step = 1.0, max_steps = 200L) {
+    .Call('_lvmcomp_MHRM_conf', PACKAGE = 'lvmcomp', response, A, Q, d, B, theta, step, max_steps)
+}
+
+#' @export
+sa_mirt_conf1 <- function(response, A, Q, d, B, theta, alpha, step = 1.0, ave_from = 100L, max_steps = 200L) {
+    .Call('_lvmcomp_sa_mirt_conf1', PACKAGE = 'lvmcomp', response, A, Q, d, B, theta, alpha, step, ave_from, max_steps)
 }
 
 #' @export
