@@ -493,8 +493,8 @@ arma::mat oakes(arma::mat theta0, arma::mat response, arma::mat Q, arma::mat Sig
   x(1) = 0;
   x(2) = 5;
   arma::mat inv_sigma = arma::inv(Sigma);
-  arma::vec s = s_func(theta0, response, Q, Sigma, A, d);
-  arma::mat res1 = (h_func(theta0, response, Q, Sigma, A, d) - s * s.t());
+  arma::vec s = s_func(theta0, response, Q, inv_sigma, A, d);
+  arma::mat res1 = (h_func(theta0, response, Q, inv_sigma, A, d) - s * s.t());
   arma::vec res2 = s;
   for(int m=1;m<M;++m){
     Rcpp::checkUserInterrupt();
@@ -507,8 +507,8 @@ arma::mat oakes(arma::mat theta0, arma::mat response, arma::mat Q, arma::mat Sig
     for(unsigned long int i=0;i<N;++i){
       theta0.row(i) = sample_theta_i_arms(theta0.row(i).t(), response.row(i).t(), inv_sigma, A, d).t();
     }
-    s = s_func(theta0, response, Q, Sigma, A, d);
-    res1 += (h_func(theta0, response, Q, Sigma, A, d) - s * s.t());
+    s = s_func(theta0, response, Q, inv_sigma, A, d);
+    res1 += (h_func(theta0, response, Q, inv_sigma, A, d) - s * s.t());
     res2 += s;
   }
   res1 /= M;

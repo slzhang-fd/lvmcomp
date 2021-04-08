@@ -576,12 +576,12 @@ Rcpp::List sa_mirt_conf(const arma::mat &response,
   arma::mat B_mis_info = arma::zeros(K,K);
   // arma::vec log_lik = arma::zeros(max_steps);
 
-  // int param_num = arma::accu(Q) + J + K*(K-1)/2;
-  // arma::vec s;
-  // arma::vec res2 = arma::zeros(param_num);
-  // arma::mat res1 = arma::zeros(param_num, param_num);
-  // arma::vec mis_info2 = arma::zeros(param_num);
-  // arma::mat mis_info1 = arma::zeros(param_num, param_num);
+  int param_num = arma::accu(Q) + J + K*(K-1)/2;
+  arma::vec s;
+  arma::vec res2 = arma::zeros(param_num);
+  arma::mat res1 = arma::zeros(param_num, param_num);
+  arma::vec mis_info2 = arma::zeros(param_num);
+  arma::mat mis_info1 = arma::zeros(param_num, param_num);
   int mcn = 1;
   for(mcn=1; mcn < max_steps; mcn++){
     Rcpp::checkUserInterrupt();
@@ -594,11 +594,10 @@ Rcpp::List sa_mirt_conf(const arma::mat &response,
     }
 
     // calculate missing information
-    // s = s_func(theta, response, Q, inv_sigma, A, d);
-    // res1 += factor * (h_func(theta, response, Q, inv_sigma, A, d) - s * s.t() - res1);
-    // res2 += factor * (s - res2);
-    // mis_info1 = mis_info1 * mcn / (mcn+1.0) + res1 / (mcn+1.0);
-    // mis_info2 = mis_info2 * mcn / (mcn+1.0) + res2 / (mcn+1.0);
+    double factor = std::pow(mcn, -alpha);
+    s = s_func(theta, response, Q, inv_sigma, A, d);
+    res1 += factor * (h_func(theta, response, Q, inv_sigma, A, d) - s * s.t() - res1);
+    res2 += factor * (s - res2);
     
     // Robbin-Monro update
     RM_update_conf(response, theta, A, A_res1, A_res2, A_mis_info, Q,
@@ -612,17 +611,21 @@ Rcpp::List sa_mirt_conf(const arma::mat &response,
     // epsd = arma::abs(d_hat-d).max()/(mcn+1.0);
     // epsB = arma::abs(B_hat-B).max()/(mcn+1.0);
     // eps = std::max({epsA,epsd,epsB});
-    // Rcpp::Rcout << "\r iter: " << mcn << " eps: " << eps;
+    Rcpp::Rcout << "\r iter: " << mcn;
     if(mcn<ave_from){
       A_hat = A;
       d_hat = d;
       B_hat = B;
+      mis_info1 = res1;
+      mis_info2 = res2;
     }
     else{
       double mcn0 = mcn - ave_from;
       A_hat = A_hat * mcn0 / (mcn0+1.0) + A / (mcn0+1.0);
       d_hat = d_hat * mcn0 / (mcn0+1.0) + d / (mcn0+1.0);
       B_hat = arma::normalise(B_hat * mcn0 / (mcn0+1.0) + B / (mcn0+1.0));
+      mis_info1 = mis_info1 * mcn0 / (mcn0+1.0) + res1 / (mcn0+1.0);
+      mis_info2 = mis_info2 * mcn0 / (mcn0+1.0) + res2 / (mcn0+1.0);
     }
     
     // A_all.col(mcn-1) = arma::vectorise(A);
@@ -643,7 +646,7 @@ Rcpp::List sa_mirt_conf(const arma::mat &response,
                             // Rcpp::Named("A_all") = A_all.cols(0, mcn-2).t(),
                             // Rcpp::Named("d_all") = d_all.cols(0, mcn-2).t(),
                             // Rcpp::Named("B_all") = B_all.cols(0, mcn-2).t(),
-                            // Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
+                            Rcpp::Named("oakes") = mis_info1 + mis_info2*mis_info2.t(),
                             Rcpp::Named("theta") = theta);
 
 }
